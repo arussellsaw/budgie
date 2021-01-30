@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title>🏦📊</title>
+</head>
+<body class="w-4/12 mx-auto mt-20 flex flex-col space-y-4">
+<p class="text-5xl font-bold">👋 Hello!</p>
+{{if not .User }}
+    <p class="mb-10 text-xl font-bold">It looks like you're not logged in 🤔. You can sign up below, or log in if you've been here already!</p>
+    <form class="flex flex-col w-6/12 mx-auto" method="POST" action="/api/signup">
+        <p class="text-xl font-bold">Sign up</p>
+        <input type="text" name="email" placeholder="Email"/>
+        <input type="password" name="pass" placeholder="Password"/>
+        <input type="submit"/>
+    </form>
+    <form class="flex flex-col w-6/12 mx-auto" method="post" action="/api/login">
+        <p class="text-xl font-bold">Log in</p>
+        <label>
+            <input class="border-solid border-1 rounded" type="text" name="email" placeholder="Email"/>
+        </label>
+        <label>
+            <input type="password" name="pass" placeholder="Password"/>
+        </label>
+        <input type="submit"/>
+    </form>
+{{else}}
+    <p class="text-xl font-bold">Thanks for logging in, let's get you set up! First we need to connect with Truelayer & Google Sheets:</p>
+    {{if .HasTruelayer }}
+        <p class="text-2xl font-bold">🏦 Truelayer ✅</p>
+    {{else}}
+        <p class="text-2xl font-bold">🏦 Truelayer ❌</p>
+        <a href="/api/truelayer/oauth/login">connect Truelayer</a>
+    {{end}}
+    {{if .HasSheets}}
+        <p class="text-2xl font-bold">📊 Google Sheets ✅</p>
+    {{else}}
+        <p class="text-2xl font-bold">📊 Google Sheets ❌</p>
+        <a href="/api/sheets/oauth/login">connect Google Sheets</a>
+    {{end}}
+    {{if and .HasTruelayer .HasSheets }}
+        {{if not .User.SheetID }}
+            <p class="text-2xl font-bold">Looks like we still need to <a class="text-blue-500" href="/api/create-sheet">Create a sheet.</a></p>
+        {{else}}
+            <p class="text-xl font-bold">Looks like we have a spreadsheet, you can view it <a class="text-blue-500" target="_blank" href="https://docs.google.com/spreadsheets/d/{{.User.SheetID}}">here</a></p>
+        {{end}}
+        <p class="text-xl font-bold">We're currently syncing these accounts:</p>
+        {{ range .Accounts }}
+            <p class="ml-5 text-xl font-bold">•  {{.DisplayName}}</p>
+        {{end}}
+    {{end}}
+    <p class="text-xl font-bold">They were last synced at {{ .User.SyncTime }}</p>
+    <div>
+        <p class="pt-5 text-l font-bold">You can <a class="text-gray-500" target="_blank" href="/api/logout">Log out here.</a></p>
+        <p class="text-l font-bold">Or if you don't want to use us anymore, you can <a class="text-red-500" target="_blank" href="/api/delete-account">Delete your account.</a></p>
+    </div>
+{{end}}
+</body>
+</html>
