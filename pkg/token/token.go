@@ -18,6 +18,16 @@ import (
 const collection = "banksheets#tokens"
 
 func Set(ctx context.Context, id string, config *oauth2.Config, token *oauth2.Token) error {
+	var refreshToken string
+
+	existing, err := Get(ctx, config, id)
+	if err == nil {
+		refreshToken = existing.RefreshToken
+	}
+
+	if token.RefreshToken == "" {
+		token.RefreshToken = refreshToken
+	}
 	fs, err := store.FromContext(ctx)
 	if err != nil {
 		return err
@@ -69,6 +79,10 @@ func Get(ctx context.Context, config *oauth2.Config, id string) (*oauth2.Token, 
 		return nil, err
 	}
 	err = json.Unmarshal(buf, &t)
+
+	if t.RefreshToken == "" {
+		slog.Warn(ctx, "Stored token has no referesh token! %s", tokenID(id, config))
+	}
 
 	src := config.TokenSource(ctx, &t)
 

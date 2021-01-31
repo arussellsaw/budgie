@@ -32,7 +32,6 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 	u := domain.UserFromContext(ctx)
 	hasTL, accs := hasTruelayer(ctx, u)
-	slog.Debug(ctx, "%+v", accs)
 	t.Execute(w, indexData{
 		User:         u,
 		HasTruelayer: hasTL,

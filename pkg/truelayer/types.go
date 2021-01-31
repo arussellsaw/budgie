@@ -46,3 +46,11 @@ type Meta struct {
 	BankTransactionID           string `json:"bank_transaction_id"`
 	ProviderTransactionCategory string `json:"provider_transaction_category"`
 }
+
+type Balance struct {
+	Currency        string    `json:"currency"`
+	Available       float64   `json:"available"`
+	Current         float64   `json:"current"`
+	Overdraft       float64   `json:"overdraft"`
+	UpdateTimestamp time.Time `json:"update_timestamp"`
+}

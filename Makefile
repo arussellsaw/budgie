@@ -1,14 +1,16 @@
 build:
-	docker build -t gcr.io/russellsaw/banksheets --build-arg BUILDKIT_INLINE_CACHE=1 .
+	gcloud config set project youneedaspreadsheet
+	docker build -t gcr.io/youneedaspreadsheet/app .
 
 deploy: build push
-	gcloud beta run deploy banksheets --image gcr.io/russellsaw/banksheets:latest
+	gcloud config set project youneedaspreadsheet
+	gcloud beta run deploy youneedaspreadsheet --image gcr.io/youneedaspreadsheet/app:latest
 
-deploy-worker: build push
-	gcloud beta run deploy banksheets-background --image gcr.io/russellsaw/banksheets:latest
 
 push:
-	docker push gcr.io/russellsaw/banksheets
+	gcloud config set project youneedaspreadsheet
+	docker push gcr.io/youneedaspreadsheet/app
 
 just-deploy:
-	gcloud beta run deploy banksheets --image gcr.io/russellsaw/banksheets:latest
+	gcloud config set project youneedaspreadsheet
+	gcloud beta run deploy banksheets --image gcr.io/youneedaspreadsheet/app:latest

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"net/http"
 	"time"
 
@@ -54,6 +53,10 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 		slog.Error(ctx, "Error getting sheet: %s", err)
 		return
 	}
+	var (
+		reqs         []*gsheets.Request
+		balanceSheet *gsheets.Sheet
+	)
 	for _, acc := range accs {
 		attempted := false
 	findSheet:
@@ -61,6 +64,9 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 		for _, sheet := range userSheet.Sheets {
 			if sheet.Properties.Title == acc.DisplayName {
 				accSheet = sheet
+			}
+			if sheet.Properties.Title == "Sheet1" {
+				balanceSheet = sheet
 			}
 		}
 		if accSheet == nil {
@@ -96,15 +102,11 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 			slog.Error(ctx, "Error getting transactions: %s", err)
 			return
 		}
-		update := buildUpdate(u.SheetID, txs, accSheet)
+		update := buildUpdate(txs, accSheet)
 		if update == nil {
 			continue
 		}
-		_, err = gs.Service(ctx).Spreadsheets.BatchUpdate(u.SheetID, update).Context(ctx).Do()
-		if err != nil {
-			slog.Error(ctx, "Error building update: %s", err)
-			return
-		}
+		reqs = append(reqs, update)
 
 	}
 	u.LastSync = time.Now()
@@ -112,14 +114,37 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Error(ctx, "Error updating last sync time: %s", err)
 	}
+
+	var balances []truelayer.Balance
+	for _, acc := range accs {
+		b, err := tl.Balance(ctx, acc.AccountID)
+		if err != nil {
+			slog.Error(ctx, "error getting balance: %s", err)
+			return
+		}
+		balances = append(balances, *b)
+	}
+	reqs = append(reqs, balanceUpdate(accs, balances, balanceSheet))
+
+	_, err = gs.Service(ctx).Spreadsheets.BatchUpdate(u.SheetID, &gsheets.BatchUpdateSpreadsheetRequest{
+		Requests: reqs,
+	}).Context(ctx).Do()
+	if err != nil {
+		slog.Error(ctx, "Error updating sheet: %s", err)
+		return
+	}
+	http.Redirect(w, r, "/", 302)
 }
 
-func buildUpdate(sheetID string, txs []truelayer.Transaction, sheet *gsheets.Sheet) *gsheets.BatchUpdateSpreadsheetRequest {
+func buildUpdate(txs []truelayer.Transaction, sheet *gsheets.Sheet) *gsheets.Request {
 	if len(sheet.Data) == 0 {
 		return nil
 	}
 	existing := make(map[string]struct{})
 	for _, row := range sheet.Data[0].RowData {
+		if row == nil || len(row.Values) == 0 || row.Values[0] == nil || row.Values[0].UserEnteredValue == nil || row.Values[0].UserEnteredValue.StringValue == nil {
+			continue
+		}
 		txid := *row.Values[0].UserEnteredValue.StringValue
 		existing[txid] = struct{}{}
 	}
@@ -131,18 +156,13 @@ func buildUpdate(sheetID string, txs []truelayer.Transaction, sheet *gsheets.She
 		filtered = append(filtered, tx)
 	}
 	if len(filtered) == 0 {
-		slog.Debug(context.Background(), "empty sync")
 		return nil
 	}
-	return &gsheets.BatchUpdateSpreadsheetRequest{
-		Requests: []*gsheets.Request{
-			{
-				AppendCells: &gsheets.AppendCellsRequest{
-					Fields:  "*",
-					SheetId: sheet.Properties.SheetId,
-					Rows:    buildRows(filtered),
-				},
-			},
+	return &gsheets.Request{
+		AppendCells: &gsheets.AppendCellsRequest{
+			Fields:  "*",
+			SheetId: sheet.Properties.SheetId,
+			Rows:    buildRows(filtered),
 		},
 	}
 }
@@ -193,4 +213,50 @@ func buildRows(txs []truelayer.Transaction) []*gsheets.RowData {
 		rows = append(rows, &rd)
 	}
 	return rows
+}
+
+func balanceUpdate(accs []truelayer.Account, balances []truelayer.Balance, sheet *gsheets.Sheet) *gsheets.Request {
+	return &gsheets.Request{
+		UpdateCells: &gsheets.UpdateCellsRequest{
+			Fields: "*",
+			Range: &gsheets.GridRange{
+				SheetId:          sheet.Properties.SheetId,
+				StartRowIndex:    0,
+				StartColumnIndex: 0,
+				EndColumnIndex:   0,
+				EndRowIndex:      0,
+			},
+			Rows: func() []*gsheets.RowData {
+				rows := []*gsheets.RowData{}
+				for i, b := range balances {
+					b := b
+					rows = append(rows, &gsheets.RowData{
+						Values: []*gsheets.CellData{
+							{
+								UserEnteredValue: &gsheets.ExtendedValue{
+									StringValue: &accs[i].DisplayName,
+								},
+							},
+							{
+								UserEnteredValue: &gsheets.ExtendedValue{
+									StringValue: &b.Currency,
+								},
+							},
+							{
+								UserEnteredValue: &gsheets.ExtendedValue{
+									NumberValue: &b.Available,
+								},
+							},
+							{
+								UserEnteredValue: &gsheets.ExtendedValue{
+									NumberValue: &b.Current,
+								},
+							},
+						},
+					})
+				}
+				return rows
+			}(),
+		},
+	}
 }

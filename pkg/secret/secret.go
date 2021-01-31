@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	projectID  = "266969078315"
+	projectID  = "youneedaspreadsheet"
 	locationID = "global"
 )
 
@@ -54,7 +54,7 @@ func Encrypt(ctx context.Context, plaintext []byte) (string, string, error) {
 	}
 	defer client.Close()
 
-	path := "projects/russellsaw/locations/global/keyRings/books/cryptoKeys/oauth/cryptoKeyVersions/1"
+	path := "projects/youneedaspreadsheet/locations/global/keyRings/oauth/cryptoKeys/access_tokens/cryptoKeyVersions/1"
 	res, err := client.Encrypt(ctx, &kmspb.EncryptRequest{
 		Name:      path,
 		Plaintext: []byte(plaintext),
@@ -79,7 +79,7 @@ func Decrypt(ctx context.Context, ciphertext, keyName string) ([]byte, error) {
 		return nil, err
 	}
 
-	keyName = "projects/russellsaw/locations/global/keyRings/books/cryptoKeys/oauth"
+	keyName = "projects/youneedaspreadsheet/locations/global/keyRings/oauth/cryptoKeys/access_tokens"
 
 	res, err := client.Decrypt(ctx, &kmspb.DecryptRequest{
 		Name:       keyName,

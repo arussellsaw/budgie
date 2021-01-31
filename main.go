@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	sloggcloud "github.com/arussellsaw/slog-gcloud"
+
 	"github.com/monzo/slog"
 
 	"github.com/gorilla/mux"
@@ -17,10 +19,20 @@ import (
 	"github.com/arussellsaw/bank-sheets/pkg/sheets"
 	"github.com/arussellsaw/bank-sheets/pkg/store"
 	"github.com/arussellsaw/bank-sheets/pkg/truelayer"
+	"github.com/arussellsaw/bank-sheets/pkg/util"
 )
 
 func main() {
-	logger := logging.ColourLogger{Writer: os.Stdout}
+	var logger slog.Logger
+
+	sloggcloud.ProjectID = os.Getenv("PROJECT_ID")
+
+	logger = logging.ContextParamLogger{Logger: &sloggcloud.StackDriverLogger{}}
+
+	if !util.IsProd() {
+		logger = logging.ColourLogger{Writer: os.Stdout}
+	}
+
 	slog.SetDefaultLogger(logger)
 
 	ctx := context.Background()
@@ -36,8 +48,17 @@ func main() {
 
 	r := mux.NewRouter()
 
-	sheets.Routes(r)
-	truelayer.Routes(r)
+	err = sheets.Init(ctx, r)
+	if err != nil {
+		slog.Error(ctx, "Error intialising Google Sheets: %s", err)
+		os.Exit(1)
+	}
+	err = truelayer.Init(ctx, r)
+	if err != nil {
+		slog.Error(ctx, "Error intialising Truelayer: %s", err)
+		os.Exit(1)
+	}
+
 	handler.Routes(r)
 
 	srv := http.Server{

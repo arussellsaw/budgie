@@ -1,9 +1,7 @@
 package domain
 
 import (
-	"bytes"
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,22 +11,18 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 
-	"github.com/arussellsaw/bank-sheets/pkg/idgen"
 	"github.com/arussellsaw/bank-sheets/pkg/store"
 )
 
-func NewUser(ctx context.Context, email, password string) (*User, error) {
+func NewUserWithID(ctx context.Context, id, email string) (*User, error) {
 	fs, err := store.FromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	id := idgen.New("usr")
 	user := User{
-		ID:           id,
-		Email:        email,
-		PasswordHash: hashPassword(password),
-		Verified:     true, // TODO: email verification
-		Created:      time.Now(),
+		ID:      id,
+		Email:   email,
+		Created: time.Now(),
 	}
 	_, err = fs.Collection("banksheets#users").Doc(id).Set(ctx, user)
 	return &user, err
@@ -88,14 +82,11 @@ func WithUser(ctx context.Context, u *User) context.Context {
 }
 
 type User struct {
-	ID           string    `json:"id"`
-	Email        string    `json:"email"`
-	PasswordHash []byte    `json:"password_hash"`
-	Verified     bool      `json:"verified"`
-	VerifyToken  string    `json:"verify_token"`
-	Created      time.Time `json:"created"`
-	SheetID      string    `json:"sheet_id"`
-	LastSync     time.Time `json:"last_sync"`
+	ID       string    `json:"id"`
+	Email    string    `json:"email"`
+	Created  time.Time `json:"created"`
+	SheetID  string    `json:"sheet_id"`
+	LastSync time.Time `json:"last_sync"`
 }
 
 func (u *User) Session() (string, error) {
@@ -104,22 +95,6 @@ func (u *User) Session() (string, error) {
 	})
 
 	return t.SignedString([]byte(os.Getenv("TOKEN_SECRET")))
-}
-
-func (u *User) ValidatePassword(password string) bool {
-	if u == nil {
-		return false
-	}
-	hash := hashPassword(password)
-	return bytes.Equal(hash, u.PasswordHash)
-}
-
-func hashPassword(pw string) []byte {
-	h := sha256.New()
-	h.Write([]byte(os.Getenv("PW_SALT")))
-	h.Write([]byte(pw))
-	hashed := h.Sum(nil)
-	return hashed
 }
 
 func UserSessionMiddleware(next http.Handler) http.Handler {
@@ -166,10 +141,6 @@ func UserSessionMiddleware(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
-}
-
-func (u *User) SendVerificationEmail(ctx context.Context) {
-
 }
 
 func (u *User) SyncTime() string {

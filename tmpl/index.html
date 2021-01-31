@@ -2,59 +2,84 @@
 <html lang="en">
 <head>
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=0.86, maximum-scale=5.0, minimum-scale=0.86">
+    <script async defer data-domain="booksheet.russellsaw.io" src="https://plausible.io/js/plausible.js"></script>
     <meta charset="UTF-8">
-    <title>🏦📊</title>
+    <title>🏦📊 YNAS</title>
 </head>
-<body class="w-4/12 mx-auto mt-20 flex flex-col space-y-4">
-<p class="text-5xl font-bold">👋 Hello!</p>
-{{if not .User }}
-    <p class="mb-10 text-xl font-bold">It looks like you're not logged in 🤔. You can sign up below, or log in if you've been here already!</p>
-    <form class="flex flex-col w-6/12 mx-auto" method="POST" action="/api/signup">
-        <p class="text-xl font-bold">Sign up</p>
-        <input type="text" name="email" placeholder="Email"/>
-        <input type="password" name="pass" placeholder="Password"/>
-        <input type="submit"/>
-    </form>
-    <form class="flex flex-col w-6/12 mx-auto" method="post" action="/api/login">
-        <p class="text-xl font-bold">Log in</p>
-        <label>
-            <input class="border-solid border-1 rounded" type="text" name="email" placeholder="Email"/>
-        </label>
-        <label>
-            <input type="password" name="pass" placeholder="Password"/>
-        </label>
-        <input type="submit"/>
-    </form>
-{{else}}
-    <p class="text-xl font-bold">Thanks for logging in, let's get you set up! First we need to connect with Truelayer & Google Sheets:</p>
-    {{if .HasTruelayer }}
-        <p class="text-2xl font-bold">🏦 Truelayer ✅</p>
+<body>
+<div class="max-w-screen-sm mx-auto space-y-5 mt-20 mb-20 p-4">
+    <p class="text-5xl font-extrabold">👋 Hello!</p>
+    {{if not .User }}
+        <p class="mb-10 text-xl font-bold">Thanks for stopping by, you can sign up and log in by clicking the link below! 👇</p>
+        <p> <a class="mt-10 text-l font-bold text-blue-500" href="/api/sheets/oauth/login">Log in with Google.</a></p>
+        <p class="text-3xl font-bold">You need a spreadsheet 📊</p>
+        <p class="text-l font-bold">
+            Get on top of your finances by tracking all of your bank accounts in Google Sheets. Having a high level view of
+            your money is a budgeting superpower, you'll be able to analyse your spending & savings over the long term, and
+            work out how to hit your money goals. But it'd be a pain to manually update a spreadsheet with your transactions
+            & balances, why not let the robots do it for you? 🤖
+        </p>
+        <p class="text-3xl font-bold">What is this? 💭</p>
+        <p class="text-l font-bold">
+            UK banks have a pretty cool, but under-adopted feature called 'open banking' which is
+            a set of APIS provided by all banks that allow users & companies to read data, pay & accept payments via a
+            common interface. This page uses <a class="text-blue-500" href="https://truelayer.com">Truelayer</a> to
+            connect to your bank and read the balance & transactions, then writes that data into a spreadsheet using
+            the Google Sheets API.</p>
+        <p class="text-l font-bold">
+            I use this tool to have my current bank balance in a few different spreadsheets, i also feed it into BigQuery
+            as an external table so i can make a Grafana dashboard for my daily spending & budgets, you can find a guide
+            on how to do that <a class="text-blue-500 text-bold" href="https://twitter.com/arussellsaw/status/1284857181163184128?s=20">here</a>.
+        </p>
+        <p class="text-3xl font-bold">Why should i trust you? 🕵️‍♀️</p>
+        <p class="text-l font-bold" id="privacy-policy">
+            This project is open source, you can find it on <a class="text-blue-500" href="https://github.com/arussellsaw/youneedaspreadsheet">GitHub</a>.
+            I never store or log any of your data & the only place the data lives is in your bank, and the spreadsheet you
+            configure. The credentials used to access both google sheets and Truelayer are encrypted at rest via Google
+            Cloud's KMS (Key Management Service). I will never share any of your data with a third party without your direct
+            consent, and would only ever need to if we were debugging something with either Truelayer or Google Sheets
+            If you have any questions please feel free to email me at <a class="text-blue-500" href="mailto:arussellsaw@hey.com">arussellsaw@hey.com</a>
+            or <a class="text-blue-500" href="https://github.com/arussellsaw/youneedaspreadsheet/issues/new">raise an issue on GitHub.</a>
+        </p>
+        <p class="text-l font-bold">Follow me on <a class="text-blue-500" href="https://twitter.com/arussellsaw">Twitter. 🦆</a></p>
     {{else}}
-        <p class="text-2xl font-bold">🏦 Truelayer ❌</p>
-        <a href="/api/truelayer/oauth/login">connect Truelayer</a>
-    {{end}}
-    {{if .HasSheets}}
-        <p class="text-2xl font-bold">📊 Google Sheets ✅</p>
-    {{else}}
-        <p class="text-2xl font-bold">📊 Google Sheets ❌</p>
-        <a href="/api/sheets/oauth/login">connect Google Sheets</a>
-    {{end}}
-    {{if and .HasTruelayer .HasSheets }}
-        {{if not .User.SheetID }}
-            <p class="text-2xl font-bold">Looks like we still need to <a class="text-blue-500" href="/api/create-sheet">Create a sheet.</a></p>
+        {{if and .HasTruelayer .HasSheets}}
+            <p class="text-xl font-bold">Thanks for logging in, looks like everything is working fine! 👌</p>
         {{else}}
-            <p class="text-xl font-bold">Looks like we have a spreadsheet, you can view it <a class="text-blue-500" target="_blank" href="https://docs.google.com/spreadsheets/d/{{.User.SheetID}}">here</a></p>
+            <p class="text-xl font-bold">Thanks for logging in, let's get you set up! First we need to connect with Truelayer & Google Sheets:</p>
         {{end}}
-        <p class="text-xl font-bold">We're currently syncing these accounts:</p>
-        {{ range .Accounts }}
-            <p class="ml-5 text-xl font-bold">•  {{.DisplayName}}</p>
+        {{if .HasTruelayer }}
+            <p class="text-2xl font-bold">🏦 Truelayer ✅</p>
+        {{else}}
+            <p class="text-2xl font-bold">🏦 Truelayer ❌</p>
+            <a href="/api/truelayer/oauth/login">connect Truelayer</a>
         {{end}}
+        {{if .HasSheets}}
+            <p class="text-2xl font-bold">📊 Google Sheets ✅</p>
+        {{else}}
+            <p class="text-2xl font-bold">📊 Google Sheets ❌</p>
+            <a href="/api/sheets/oauth/login">connect Google Sheets</a>
+        {{end}}
+        {{if and .HasTruelayer .HasSheets }}
+            {{if not .User.SheetID }}
+                <p class="text-2xl font-bold">Looks like we still need to <a class="text-blue-500" href="/api/create-sheet">Create a sheet.</a></p>
+            {{else}}
+                <p class="text-xl font-bold">Your spreadsheet is <a class="text-blue-500" target="_blank" href="https://docs.google.com/spreadsheets/d/{{.User.SheetID}}">here</a> 📊</p>
+            {{end}}
+            <p class="text-xl font-bold">We're currently syncing these accounts:</p>
+            {{ range .Accounts }}
+                <p class="ml-5 text-xl font-bold">•  {{.DisplayName}}</p>
+            {{end}}
+            <p class="font-bold">They were last synced at {{ .User.SyncTime }}</p>
+            <a class="text-blue-500 font-bold" href="/api/sync">Sync now.</a>
+        {{end}}
+        <div>
+            <p class="pt-5 text-l font-bold">You can <a class="text-gray-500" href="/api/logout">Log out here.</a></p>
+            <p class="text-l font-bold">Or if you don't want to use us anymore, you can <a class="text-red-500" href="/api/delete-account">Delete your account.</a></p>
+            <p class="text-l font-bold">Your user ID is {{.User.ID}}</p>
+        </div>
     {{end}}
-    <p class="text-xl font-bold">They were last synced at {{ .User.SyncTime }}</p>
-    <div>
-        <p class="pt-5 text-l font-bold">You can <a class="text-gray-500" target="_blank" href="/api/logout">Log out here.</a></p>
-        <p class="text-l font-bold">Or if you don't want to use us anymore, you can <a class="text-red-500" target="_blank" href="/api/delete-account">Delete your account.</a></p>
-    </div>
-{{end}}
+</div>
 </body>
 </html>

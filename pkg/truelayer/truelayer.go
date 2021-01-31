@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -88,5 +89,33 @@ func (c *Client) Transactions(ctx context.Context, accountID string) ([]Transact
 		Results []Transaction `json:"results"`
 	}{}
 	err = json.NewDecoder(res.Body).Decode(&response)
+	sort.Slice(response.Results, func(i, j int) bool {
+		return response.Results[i].Timestamp > response.Results[j].Timestamp
+	})
 	return response.Results, err
+}
+
+func (c *Client) Balance(ctx context.Context, accountID string) (*Balance, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		fmt.Sprintf("%s/data/v1/accounts/%s/balance", baseURL, accountID),
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	c.authRequest(req)
+	res, err := c.http.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	response := struct {
+		Results []Balance `json:"results"`
+	}{}
+	err = json.NewDecoder(res.Body).Decode(&response)
+	if len(response.Results) != 1 {
+		return nil, fmt.Errorf("unexpected length: %v", len(response.Results))
+	}
+	return &response.Results[0], err
 }

@@ -3,6 +3,8 @@ package sheets
 import (
 	"context"
 
+	"golang.org/x/oauth2"
+
 	"github.com/pkg/errors"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
@@ -17,10 +19,11 @@ type Client struct {
 }
 
 func NewClient(ctx context.Context, userID string) (*Client, error) {
-	src, err := token.GetSource(ctx, OauthConfig, userID)
+	t, err := token.Get(ctx, OauthConfig, userID)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting token")
 	}
+	src := oauth2.StaticTokenSource(t)
 
 	srv, err := sheets.NewService(
 		ctx,
