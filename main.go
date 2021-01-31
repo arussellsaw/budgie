@@ -70,7 +70,7 @@ func main() {
 
 	srv := http.Server{
 		Addr:    ":8080",
-		Handler: domain.UserSessionMiddleware(r),
+		Handler: sloggcloud.CloudContextMiddleware(domain.UserSessionMiddleware(r)),
 		BaseContext: func(l net.Listener) context.Context {
 			return ctx
 		},

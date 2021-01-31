@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
+
+	"cloud.google.com/go/pubsub"
 
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/stripe"
 
@@ -17,6 +20,11 @@ import (
 	gsheets "google.golang.org/api/sheets/v4"
 )
 
+type pubSubMessage struct {
+	Message      pubsub.Message `json:"message"`
+	Subscription string         `json:"subscription"`
+}
+
 func handleSync(w http.ResponseWriter, r *http.Request) {
 	var (
 		ctx = r.Context()
@@ -24,13 +32,20 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 		err error
 	)
 	if u == nil {
-		userID := r.URL.Query().Get("user_id")
+		m := pubSubMessage{}
+		err = json.NewDecoder(r.Body).Decode(&m)
+		if err != nil {
+			slog.Error(ctx, "error decoding: %s", err)
+			return
+		}
+		userID := string(m.Message.Data)
 		u, err = domain.UserByID(ctx, userID)
 		if err != nil {
-			slog.Error(ctx, "Error getting user: %s", err)
+			slog.Error(ctx, "error getting user: %s", err)
 			return
 		}
 	}
+
 	if u.SheetID == "" {
 		slog.Error(ctx, "No sheet ID for user %s", u.ID)
 		http.Error(w, "You need to set up a sheet, go back to the homepage", http.StatusBadRequest)
@@ -204,17 +219,7 @@ func buildRows(txs []truelayer.Transaction) []*gsheets.RowData {
 				},
 				{
 					UserEnteredValue: &gsheets.ExtendedValue{
-						StringValue: &tx.MerchantName,
-					},
-				},
-				{
-					UserEnteredValue: &gsheets.ExtendedValue{
-						StringValue: &tx.TransactionCategory,
-					},
-				},
-				{
-					UserEnteredValue: &gsheets.ExtendedValue{
-						NumberValue: &tx.RunningBalance.Amount,
+						StringValue: &tx.Description,
 					},
 				},
 			},

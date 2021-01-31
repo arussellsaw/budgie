@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/secret"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 
 	"github.com/monzo/slog"
 	"google.golang.org/grpc"
 
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/secret"
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/store"
 )
 
@@ -20,7 +20,7 @@ const collection = "banksheets#tokens"
 func Set(ctx context.Context, id string, config *oauth2.Config, token *oauth2.Token) error {
 	var refreshToken string
 
-	existing, err := Get(ctx, config, id)
+	existing, err := doGet(ctx, config, id)
 	if err == nil {
 		refreshToken = existing.RefreshToken
 	}
@@ -55,7 +55,7 @@ func Set(ctx context.Context, id string, config *oauth2.Config, token *oauth2.To
 	return nil
 }
 
-func Get(ctx context.Context, config *oauth2.Config, id string) (*oauth2.Token, error) {
+func doGet(ctx context.Context, config *oauth2.Config, id string) (*oauth2.Token, error) {
 	fs, err := store.FromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -83,8 +83,15 @@ func Get(ctx context.Context, config *oauth2.Config, id string) (*oauth2.Token, 
 	if t.RefreshToken == "" {
 		slog.Warn(ctx, "Stored token has no referesh token! %s", tokenID(id, config))
 	}
+	return &t, nil
+}
 
-	src := config.TokenSource(ctx, &t)
+func Get(ctx context.Context, config *oauth2.Config, id string) (*oauth2.Token, error) {
+	t, err := doGet(ctx, config, id)
+	if err != nil {
+		return nil, err
+	}
+	src := config.TokenSource(ctx, t)
 
 	token, err := src.Token()
 	if err != nil {

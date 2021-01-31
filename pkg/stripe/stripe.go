@@ -71,6 +71,10 @@ func HasSubscription(ctx context.Context, u *domain.User) (bool, error) {
 }
 
 func handleCreateCheckoutSession(w http.ResponseWriter, r *http.Request) {
+	u := domain.UserFromContext(r.Context())
+	if u == nil {
+		return
+	}
 	if r.Method != "POST" {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
@@ -92,8 +96,9 @@ func handleCreateCheckoutSession(w http.ResponseWriter, r *http.Request) {
 	// is redirected to the success page.
 
 	params := &stripe.CheckoutSessionParams{
-		SuccessURL: stripe.String(util.BaseURL() + "/api/stripe/success?session_id={CHECKOUT_SESSION_ID}"),
-		CancelURL:  stripe.String(util.BaseURL() + "/"),
+		CustomerEmail: &u.Email,
+		SuccessURL:    stripe.String(util.BaseURL() + "/api/stripe/success?session_id={CHECKOUT_SESSION_ID}"),
+		CancelURL:     stripe.String(util.BaseURL() + "/"),
 		PaymentMethodTypes: stripe.StringSlice([]string{
 			"card",
 		}),

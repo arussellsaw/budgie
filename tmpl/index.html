@@ -2,20 +2,20 @@
 <html lang="en">
 <head>
     <title>🏦 👉 📊 You Need A Spreadsheet</title>
-    <meta name="title" content="🏦 👉 📊 You Need A Spreadsheet">
+    <meta name="title" content="🏦 👉 📊 You Need a Spreadsheet">
     <meta name="description" content="Get on top of your finances by tracking all of your bank accounts in Google Sheets">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://youneedaspreadsheet.com">
-    <meta property="og:title" content="🏦 👉 📊 You Need A Spreadsheet">
+    <meta property="og:title" content="🏦 👉 📊 You Need a Spreadsheet">
     <meta property="og:description" content="Get on top of your finances by tracking all of your bank accounts in Google Sheets">
     <meta property="og:image" content="/static/preview.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://metatags.io/">
-    <meta property="twitter:title" content="🏦 👉 📊 You Need A Spreadsheet">
+    <meta property="twitter:title" content="🏦 👉 📊 You Need a Spreadsheet">
     <meta property="twitter:description" content="Get on top of your finances by tracking all of your bank accounts in Google Sheets">
     <meta property="twitter:image" content="/static/preview.png">
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
@@ -119,12 +119,15 @@
             {{ range .Accounts }}
                 <p class="ml-5 text-xl font-bold">•  {{.DisplayName}}</p>
             {{end}}
-            <p class="font-bold">They were last synced at {{ .User.SyncTime }}</p>
-            <p class="font-bold">Right now you have to click this button to update your sheet, i'm planning on making this automatic every day, i'll get round to it next weekend.</p>
-            <a class="text-blue-500 font-bold" href="/api/sync">Sync now.</a>
+            {{if .User.SyncTime }}
+                <p class="font-bold">They were last synced at {{ .User.SyncTime }}</p>
+            {{else}}
+                <p class="font-bold">Your accounts haven't been synced yet, they will sync automatically every morning, but you can <a class="text-blue-500 font-bold" href="/api/sync">sync now</a> to get your data sooner.</p>
+
+            {{end}}
         {{end}}
         <div>
-            <p class="pt-5 text-l font-bold">You can <a class="text-gray-500" href="/api/logout">Log out here.</a></p>
+            <p class="pt-5 text-l font-bold">You can <a class="text-blue-500" href="/api/logout">Log out here.</a></p>
             <p class="text-l font-bold">Your user ID is {{.User.ID}}</p>
         </div>
     {{end}}

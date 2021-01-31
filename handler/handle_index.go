@@ -38,11 +38,13 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 	u := domain.UserFromContext(ctx)
 	hasTL, accs := hasTruelayer(ctx, u)
+	hasGS := hasSheets(ctx, u)
+	hasS := hasStripe(ctx, u)
 	err = t.Execute(w, indexData{
 		User:                 u,
 		HasTruelayer:         hasTL,
-		HasSheets:            hasSheets(ctx, u),
-		HasStripe:            hasStripe(ctx, u),
+		HasSheets:            hasGS,
+		HasStripe:            hasS,
 		Accounts:             accs,
 		StripePublishableKey: os.Getenv("STRIPE_PUBLISHABLE_KEY"),
 		StripePriceID:        os.Getenv("STRIPE_PRICE_ID"),

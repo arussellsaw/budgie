@@ -59,6 +59,9 @@ func oauthGoogleLogin(w http.ResponseWriter, r *http.Request) {
 func oauthGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	oauthState, _ := r.Cookie("oauthstate")
 	ctx := r.Context()
+	if oauthState == nil {
+		return
+	}
 
 	if r.FormValue("state") != oauthState.Value {
 		slog.Error(ctx, "invalid oauth google state: %s", oauthState.Value)

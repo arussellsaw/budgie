@@ -5,6 +5,7 @@ go 1.15
 require (
 	cloud.google.com/go v0.72.0
 	cloud.google.com/go/firestore v1.4.0
+	cloud.google.com/go/pubsub v1.3.1
 	github.com/arussellsaw/crudley v0.0.0-20210104100434-88fdfc7d699b // indirect
 	github.com/arussellsaw/slog-gcloud v0.1.7
 	github.com/bwmarrin/snowflake v0.3.0

@@ -5,6 +5,7 @@ cloud.google.com/go/compute/metadata
 cloud.google.com/go/iam
 cloud.google.com/go/internal/btree
 cloud.google.com/go/internal/fields
+cloud.google.com/go/internal/optional
 cloud.google.com/go/internal/trace
 cloud.google.com/go/internal/version
 cloud.google.com/go/kms/apiv1
@@ -13,6 +14,11 @@ cloud.google.com/go/secretmanager/apiv1beta1
 ## explicit
 cloud.google.com/go/firestore
 cloud.google.com/go/firestore/apiv1
+# cloud.google.com/go/pubsub v1.3.1
+## explicit
+cloud.google.com/go/pubsub
+cloud.google.com/go/pubsub/apiv1
+cloud.google.com/go/pubsub/internal/distribution
 # github.com/arussellsaw/crudley v0.0.0-20210104100434-88fdfc7d699b
 ## explicit
 # github.com/arussellsaw/slog-gcloud v0.1.7
@@ -146,6 +152,9 @@ golang.org/x/oauth2/google/internal/externalaccount
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
+# golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
+golang.org/x/sync/errgroup
+golang.org/x/sync/semaphore
 # golang.org/x/sys v0.0.0-20201201145000-ef89a241ccb3
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
@@ -182,6 +191,7 @@ google.golang.org/api/iterator
 google.golang.org/api/option
 google.golang.org/api/option/internaloption
 google.golang.org/api/sheets/v4
+google.golang.org/api/support/bundler
 google.golang.org/api/transport
 google.golang.org/api/transport/cert
 google.golang.org/api/transport/grpc
@@ -208,10 +218,12 @@ google.golang.org/genproto/googleapis/cloud/kms/v1
 google.golang.org/genproto/googleapis/cloud/secretmanager/v1beta1
 google.golang.org/genproto/googleapis/firestore/v1
 google.golang.org/genproto/googleapis/iam/v1
+google.golang.org/genproto/googleapis/pubsub/v1
 google.golang.org/genproto/googleapis/rpc/code
 google.golang.org/genproto/googleapis/rpc/status
 google.golang.org/genproto/googleapis/type/expr
 google.golang.org/genproto/googleapis/type/latlng
+google.golang.org/genproto/protobuf/field_mask
 # google.golang.org/grpc v1.35.0
 ## explicit
 google.golang.org/grpc

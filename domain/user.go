@@ -77,6 +77,31 @@ func UserByEmail(ctx context.Context, email string) (*User, error) {
 	return &usr, err
 }
 
+func ListUsers(ctx context.Context) ([]User, error) {
+	fs, err := store.FromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	iter := fs.Collection("banksheets#users").Documents(ctx)
+	docs, err := iter.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	if len(docs) == 0 {
+		return nil, nil
+	}
+	out := []User{}
+	for _, doc := range docs {
+		usr := User{}
+		err = doc.DataTo(&usr)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, usr)
+	}
+	return out, nil
+}
+
 func UpdateUser(ctx context.Context, u *User) error {
 	fs, err := store.FromContext(ctx)
 	if err != nil {
@@ -153,5 +178,8 @@ func UserSessionMiddleware(next http.Handler) http.Handler {
 }
 
 func (u *User) SyncTime() string {
+	if u.LastSync.IsZero() {
+		return ""
+	}
 	return u.LastSync.Format("2006-01-02 15:04")
 }
