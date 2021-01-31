@@ -5,16 +5,16 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
+
 	"cloud.google.com/go/firestore"
 )
 
 var ErrStoreNotFound = errors.New("not_found.store: couldn't find store in context")
 
 func Init(ctx context.Context) (*firestore.Client, error) {
-	projectID := "russellsaw"
-
 	var err error
-	fs, err := firestore.NewClient(ctx, projectID)
+	fs, err := firestore.NewClient(ctx, util.Project())
 	if err != nil {
 		return fs, err
 	}

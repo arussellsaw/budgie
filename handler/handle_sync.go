@@ -4,13 +4,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/arussellsaw/bank-sheets/pkg/sheets"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/stripe"
 
-	"github.com/arussellsaw/bank-sheets/pkg/truelayer"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/sheets"
+
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/truelayer"
 
 	"github.com/monzo/slog"
 
-	"github.com/arussellsaw/bank-sheets/domain"
+	"github.com/arussellsaw/youneedaspreadsheet/domain"
 
 	gsheets "google.golang.org/api/sheets/v4"
 )
@@ -31,6 +33,13 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 	}
 	if u.SheetID == "" {
 		slog.Error(ctx, "No sheet ID for user %s", u.ID)
+		http.Error(w, "You need to set up a sheet, go back to the homepage", http.StatusBadRequest)
+		return
+	}
+	ok, err := stripe.HasSubscription(ctx, u)
+	if err != nil || !ok {
+		slog.Error(ctx, "error checking for subscription: %s", err)
+		http.Error(w, "You need to set up your stripe subscription, go back to the homepage", http.StatusForbidden)
 		return
 	}
 	tl, err := truelayer.NewClient(ctx, u.ID)

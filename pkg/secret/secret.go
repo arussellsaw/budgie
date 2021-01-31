@@ -7,6 +7,7 @@ import (
 
 	kms "cloud.google.com/go/kms/apiv1"
 	secretmanager "cloud.google.com/go/secretmanager/apiv1beta1"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
 
 	kmspb "google.golang.org/genproto/googleapis/cloud/kms/v1"
 	secrets "google.golang.org/genproto/googleapis/cloud/secretmanager/v1beta1"
@@ -54,7 +55,7 @@ func Encrypt(ctx context.Context, plaintext []byte) (string, string, error) {
 	}
 	defer client.Close()
 
-	path := "projects/youneedaspreadsheet/locations/global/keyRings/oauth/cryptoKeys/access_tokens/cryptoKeyVersions/1"
+	path := "projects/" + util.Project() + "/locations/global/keyRings/oauth/cryptoKeys/access_tokens/cryptoKeyVersions/1"
 	res, err := client.Encrypt(ctx, &kmspb.EncryptRequest{
 		Name:      path,
 		Plaintext: []byte(plaintext),
@@ -79,7 +80,7 @@ func Decrypt(ctx context.Context, ciphertext, keyName string) ([]byte, error) {
 		return nil, err
 	}
 
-	keyName = "projects/youneedaspreadsheet/locations/global/keyRings/oauth/cryptoKeys/access_tokens"
+	keyName = "projects/" + util.Project() + "/locations/global/keyRings/oauth/cryptoKeys/access_tokens"
 
 	res, err := client.Decrypt(ctx, &kmspb.DecryptRequest{
 		Name:       keyName,

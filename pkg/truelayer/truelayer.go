@@ -10,7 +10,7 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/arussellsaw/bank-sheets/pkg/token"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/token"
 )
 
 const (
@@ -90,7 +90,7 @@ func (c *Client) Transactions(ctx context.Context, accountID string) ([]Transact
 	}{}
 	err = json.NewDecoder(res.Body).Decode(&response)
 	sort.Slice(response.Results, func(i, j int) bool {
-		return response.Results[i].Timestamp > response.Results[j].Timestamp
+		return response.Results[i].Timestamp < response.Results[j].Timestamp
 	})
 	return response.Results, err
 }

@@ -6,26 +6,28 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/stripe"
+
 	sloggcloud "github.com/arussellsaw/slog-gcloud"
 
 	"github.com/monzo/slog"
 
 	"github.com/gorilla/mux"
 
-	"github.com/arussellsaw/bank-sheets/domain"
-	"github.com/arussellsaw/bank-sheets/handler"
-	"github.com/arussellsaw/bank-sheets/pkg/idgen"
-	"github.com/arussellsaw/bank-sheets/pkg/logging"
-	"github.com/arussellsaw/bank-sheets/pkg/sheets"
-	"github.com/arussellsaw/bank-sheets/pkg/store"
-	"github.com/arussellsaw/bank-sheets/pkg/truelayer"
-	"github.com/arussellsaw/bank-sheets/pkg/util"
+	"github.com/arussellsaw/youneedaspreadsheet/domain"
+	"github.com/arussellsaw/youneedaspreadsheet/handler"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/idgen"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/logging"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/sheets"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/store"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/truelayer"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
 )
 
 func main() {
 	var logger slog.Logger
 
-	sloggcloud.ProjectID = os.Getenv("PROJECT_ID")
+	sloggcloud.ProjectID = util.Project()
 
 	logger = logging.ContextParamLogger{Logger: &sloggcloud.StackDriverLogger{}}
 
@@ -56,6 +58,11 @@ func main() {
 	err = truelayer.Init(ctx, r)
 	if err != nil {
 		slog.Error(ctx, "Error intialising Truelayer: %s", err)
+		os.Exit(1)
+	}
+	err = stripe.Init(ctx, r)
+	if err != nil {
+		slog.Error(ctx, "Error intialising Stripe: %s", err)
 		os.Exit(1)
 	}
 

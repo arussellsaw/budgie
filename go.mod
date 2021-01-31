@@ -1,4 +1,4 @@
-module github.com/arussellsaw/bank-sheets
+module github.com/arussellsaw/youneedaspreadsheet
 
 go 1.15
 
@@ -16,6 +16,7 @@ require (
 	github.com/monzo/slog v0.0.0-20200930150111-c5ba10c39368
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/cachecontrol v0.0.0-20201205024021-ac21108117ac // indirect
+	github.com/stripe/stripe-go/v71 v71.48.0
 	golang.org/x/oauth2 v0.0.0-20210113205817-d3ed898aa8a3
 	google.golang.org/api v0.36.0
 	google.golang.org/genproto v0.0.0-20201203001206-6486ece9c497

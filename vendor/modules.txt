@@ -91,6 +91,15 @@ github.com/stretchr/objx
 # github.com/stretchr/testify v1.6.1
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
+# github.com/stripe/stripe-go/v71 v71.48.0
+## explicit
+github.com/stripe/stripe-go/v71
+github.com/stripe/stripe-go/v71/billingportal/session
+github.com/stripe/stripe-go/v71/checkout/session
+github.com/stripe/stripe-go/v71/form
+github.com/stripe/stripe-go/v71/lineitem
+github.com/stripe/stripe-go/v71/sub
+github.com/stripe/stripe-go/v71/webhook
 # go.opencensus.io v0.22.5
 go.opencensus.io
 go.opencensus.io/internal

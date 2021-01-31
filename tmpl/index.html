@@ -1,15 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <title>🏦 👉 📊 You Need A Spreadsheet</title>
+    <meta name="title" content="🏦 👉 📊 You Need A Spreadsheet">
+    <meta name="description" content="Get on top of your finances by tracking all of your bank accounts in Google Sheets">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://youneedaspreadsheet.com">
+    <meta property="og:title" content="🏦 👉 📊 You Need A Spreadsheet">
+    <meta property="og:description" content="Get on top of your finances by tracking all of your bank accounts in Google Sheets">
+    <meta property="og:image" content="/static/preview.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://metatags.io/">
+    <meta property="twitter:title" content="🏦 👉 📊 You Need A Spreadsheet">
+    <meta property="twitter:description" content="Get on top of your finances by tracking all of your bank accounts in Google Sheets">
+    <meta property="twitter:image" content="/static/preview.png">
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=0.86, maximum-scale=5.0, minimum-scale=0.86">
-    <script async defer data-domain="booksheet.russellsaw.io" src="https://plausible.io/js/plausible.js"></script>
+    <script async defer data-domain="youneedaspreadsheet.com" src="https://plausible.io/js/plausible.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        var stripe = Stripe({{.StripePublishableKey}});
+        var createCheckoutSession = function(priceId) {
+            return fetch("/api/stripe/setup", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    priceId: priceId
+                })
+            }).then(function(result) {
+                return result.json();
+            });
+        };
+        let sessionId;
+        let customerId;
+        {{if .User}}
+        sessionId = '{{.User.Stripe.SessionID}}';
+        customerID = '{{.User.Stripe.CustomerID}}';
+        {{end}}
+    </script>
     <meta charset="UTF-8">
-    <title>🏦📊 YNAS</title>
 </head>
 <body>
 <div class="max-w-screen-sm mx-auto space-y-5 mt-20 mb-20 p-4">
-    <p class="text-5xl font-extrabold">👋 Hello!</p>
+    <p class="text-5xl font-extrabold">Hello! 👋</p>
     {{if not .User }}
         <p class="mb-10 text-xl font-bold">Thanks for stopping by, you can sign up and log in by clicking the link below! 👇</p>
         <p> <a class="mt-10 text-l font-bold text-blue-500" href="/api/sheets/oauth/login">Log in with Google.</a></p>
@@ -20,10 +59,12 @@
             work out how to hit your money goals. But it'd be a pain to manually update a spreadsheet with your transactions
             & balances, why not let the robots do it for you? 🤖
         </p>
-        <p class="text-3xl font-bold">What is this? 💭</p>
+        <p class="text-3xl font-bold">How much does it cost? 💸</p>
+        <p class="text-l font-bold">£2 per month, billed via <a class="text-blue-500" href="https://stripe.com">Stripe</a>.</p>
+        <p class="text-3xl font-bold">What is it? 💭</p>
         <p class="text-l font-bold">
             UK banks have a pretty cool, but under-adopted feature called 'open banking' which is
-            a set of APIS provided by all banks that allow users & companies to read data, pay & accept payments via a
+            a set of APIs provided by all banks that allow users & companies to read data, pay & accept payments via a
             common interface. This page uses <a class="text-blue-500" href="https://truelayer.com">Truelayer</a> to
             connect to your bank and read the balance & transactions, then writes that data into a spreadsheet using
             the Google Sheets API.</p>
@@ -47,21 +88,28 @@
         {{if and .HasTruelayer .HasSheets}}
             <p class="text-xl font-bold">Thanks for logging in, looks like everything is working fine! 👌</p>
         {{else}}
-            <p class="text-xl font-bold">Thanks for logging in, let's get you set up! First we need to connect with Truelayer & Google Sheets:</p>
+            <p class="text-xl font-bold">Thanks for logging in, let's get you set up! First we need to connect with Truelayer, and set up a Stripe subscription:</p>
         {{end}}
         {{if .HasTruelayer }}
             <p class="text-2xl font-bold">🏦 Truelayer ✅</p>
         {{else}}
             <p class="text-2xl font-bold">🏦 Truelayer ❌</p>
-            <a href="/api/truelayer/oauth/login">connect Truelayer</a>
+            <a class="font-bold text-blue-500" href="/api/truelayer/oauth/login">connect Truelayer</a>
         {{end}}
         {{if .HasSheets}}
             <p class="text-2xl font-bold">📊 Google Sheets ✅</p>
         {{else}}
             <p class="text-2xl font-bold">📊 Google Sheets ❌</p>
-            <a href="/api/sheets/oauth/login">connect Google Sheets</a>
+            <a class="font-bold text-blue-500" href="/api/sheets/oauth/login">connect Google Sheets</a>
         {{end}}
-        {{if and .HasTruelayer .HasSheets }}
+        {{if .HasStripe}}
+            <p class="text-2xl font-bold">💳 Stripe ✅</p>
+            <a class="font-bold text-blue-500 cursor-pointer" id="manage-billing">Manage your subscription.</a>
+        {{else}}
+            <p class="text-2xl font-bold">💳 Stripe ❌</p>
+            <a class="font-bold text-blue-500 cursor-pointer" id="checkout">Set up a Stripe subscription for £2 per month.</a>
+        {{end}}
+        {{if and .HasTruelayer .HasSheets .HasStripe}}
             {{if not .User.SheetID }}
                 <p class="text-2xl font-bold">Looks like we still need to <a class="text-blue-500" href="/api/create-sheet">Create a sheet.</a></p>
             {{else}}
@@ -72,14 +120,54 @@
                 <p class="ml-5 text-xl font-bold">•  {{.DisplayName}}</p>
             {{end}}
             <p class="font-bold">They were last synced at {{ .User.SyncTime }}</p>
+            <p class="font-bold">Right now you have to click this button to update your sheet, i'm planning on making this automatic every day, i'll get round to it next weekend.</p>
             <a class="text-blue-500 font-bold" href="/api/sync">Sync now.</a>
         {{end}}
         <div>
             <p class="pt-5 text-l font-bold">You can <a class="text-gray-500" href="/api/logout">Log out here.</a></p>
-            <p class="text-l font-bold">Or if you don't want to use us anymore, you can <a class="text-red-500" href="/api/delete-account">Delete your account.</a></p>
             <p class="text-l font-bold">Your user ID is {{.User.ID}}</p>
         </div>
     {{end}}
 </div>
+<script>
+    const checkoutBtn = document
+        .getElementById("checkout")
+    if (checkoutBtn != null) {
+        checkoutBtn.addEventListener("click", function (evt) {
+            createCheckoutSession('{{.StripePriceID}}').then(function (data) {
+                // Call Stripe.js method to redirect to the new Checkout page
+                stripe.redirectToCheckout({
+                    sessionId: data.sessionId
+                })
+                    .then(handleResult);
+            });
+        });
+    }
+    // In production, this should check CSRF, and not pass the session ID.
+    // The customer ID for the portal should be pulled from the
+    // authenticated user on the server.
+    const manageBilling = document.querySelector('#manage-billing');
+    if (manageBilling != null) {
+        manageBilling.addEventListener('click', function (e) {
+            e.preventDefault();
+            fetch('/api/stripe/portal', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    sessionId: sessionId
+                }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    window.location.href = data.url;
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        });
+    }
+</script>
 </body>
 </html>

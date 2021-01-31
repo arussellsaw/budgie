@@ -6,13 +6,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/arussellsaw/bank-sheets/pkg/util"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
 
-	"github.com/arussellsaw/bank-sheets/pkg/idgen"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/idgen"
 
 	"github.com/coreos/go-oidc"
 
-	"github.com/arussellsaw/bank-sheets/domain"
+	"github.com/arussellsaw/youneedaspreadsheet/domain"
 
 	"github.com/gorilla/mux"
 	"github.com/monzo/slog"
@@ -20,7 +20,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 
-	"github.com/arussellsaw/bank-sheets/pkg/token"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/token"
 )
 
 var OauthConfig *oauth2.Config

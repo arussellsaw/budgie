@@ -6,14 +6,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/arussellsaw/bank-sheets/pkg/util"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
 
 	"github.com/gorilla/mux"
 	"github.com/monzo/slog"
 	"golang.org/x/oauth2"
 
-	"github.com/arussellsaw/bank-sheets/domain"
-	"github.com/arussellsaw/bank-sheets/pkg/token"
+	"github.com/arussellsaw/youneedaspreadsheet/domain"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/token"
 )
 
 var (

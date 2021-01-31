@@ -4,21 +4,27 @@ import (
 	"context"
 	"html/template"
 	"net/http"
+	"os"
 
-	"github.com/arussellsaw/bank-sheets/pkg/sheets"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/stripe"
 
-	"github.com/arussellsaw/bank-sheets/pkg/truelayer"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/sheets"
 
-	"github.com/arussellsaw/bank-sheets/domain"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/truelayer"
+
+	"github.com/arussellsaw/youneedaspreadsheet/domain"
 
 	"github.com/monzo/slog"
 )
 
 type indexData struct {
-	User         *domain.User
-	HasTruelayer bool
-	HasSheets    bool
-	Accounts     []truelayer.Account
+	User                 *domain.User
+	HasTruelayer         bool
+	HasSheets            bool
+	HasStripe            bool
+	StripePublishableKey string
+	StripePriceID        string
+	Accounts             []truelayer.Account
 }
 
 func handleIndex(w http.ResponseWriter, r *http.Request) {
@@ -32,12 +38,18 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 	u := domain.UserFromContext(ctx)
 	hasTL, accs := hasTruelayer(ctx, u)
-	t.Execute(w, indexData{
-		User:         u,
-		HasTruelayer: hasTL,
-		HasSheets:    hasSheets(ctx, u),
-		Accounts:     accs,
+	err = t.Execute(w, indexData{
+		User:                 u,
+		HasTruelayer:         hasTL,
+		HasSheets:            hasSheets(ctx, u),
+		HasStripe:            hasStripe(ctx, u),
+		Accounts:             accs,
+		StripePublishableKey: os.Getenv("STRIPE_PUBLISHABLE_KEY"),
+		StripePriceID:        os.Getenv("STRIPE_PRICE_ID"),
 	})
+	if err != nil {
+		slog.Error(ctx, "Index: %s", err)
+	}
 }
 
 func hasTruelayer(ctx context.Context, user *domain.User) (bool, []truelayer.Account) {
@@ -69,5 +81,23 @@ func hasSheets(ctx context.Context, user *domain.User) bool {
 	if s == nil {
 		return false
 	}
+	if user.SheetID != "" {
+		_, err = s.Get(ctx, user.SheetID)
+		if err != nil {
+			return false
+		}
+	}
 	return true
+}
+
+func hasStripe(ctx context.Context, user *domain.User) bool {
+	if user == nil {
+		return false
+	}
+	ok, err := stripe.HasSubscription(ctx, user)
+	if err != nil {
+		slog.Error(ctx, "error getting stripe subscription: %s", err)
+		return false
+	}
+	return ok
 }

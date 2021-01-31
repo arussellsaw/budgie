@@ -11,8 +11,25 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 
-	"github.com/arussellsaw/bank-sheets/pkg/store"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/store"
 )
+
+type User struct {
+	ID       string     `json:"id"`
+	Email    string     `json:"email"`
+	Created  time.Time  `json:"created"`
+	SheetID  string     `json:"sheet_id"`
+	LastSync time.Time  `json:"last_sync"`
+	Stripe   StripeData `json:"stripe"`
+}
+
+type StripeData struct {
+	FreeForMyBuds bool
+	SessionID     string
+	CustomerID    string
+	PaidUntil     time.Time
+	Error         string
+}
 
 func NewUserWithID(ctx context.Context, id, email string) (*User, error) {
 	fs, err := store.FromContext(ctx)
@@ -79,14 +96,6 @@ func UserFromContext(ctx context.Context) *User {
 
 func WithUser(ctx context.Context, u *User) context.Context {
 	return context.WithValue(ctx, "user", u)
-}
-
-type User struct {
-	ID       string    `json:"id"`
-	Email    string    `json:"email"`
-	Created  time.Time `json:"created"`
-	SheetID  string    `json:"sheet_id"`
-	LastSync time.Time `json:"last_sync"`
 }
 
 func (u *User) Session() (string, error) {

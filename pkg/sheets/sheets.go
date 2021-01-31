@@ -9,7 +9,7 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
 
-	"github.com/arussellsaw/bank-sheets/pkg/token"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/token"
 )
 
 var ErrSheetNotFound = errors.New("not_found.sheet: couldn't find sheet in context")

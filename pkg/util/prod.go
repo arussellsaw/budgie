@@ -12,3 +12,10 @@ func BaseURL() string {
 	}
 	return "http://localhost:8080"
 }
+
+func Project() string {
+	if IsProd() {
+		return "youneedaspreadsheet"
+	}
+	return "russellsaw"
+}

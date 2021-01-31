@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/arussellsaw/bank-sheets/pkg/secret"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/secret"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 
 	"github.com/monzo/slog"
 	"google.golang.org/grpc"
 
-	"github.com/arussellsaw/bank-sheets/pkg/store"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/store"
 )
 
 const collection = "banksheets#tokens"
