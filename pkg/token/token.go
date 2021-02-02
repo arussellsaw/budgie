@@ -121,7 +121,7 @@ func ListByUser(ctx context.Context, userID, kind string, config *oauth2.Config)
 
 	var tokens []*oauth2.Token
 	// maybe get old style token
-	t, err := Get(ctx, config, userID)
+	t, err := Get(ctx, config, LegacyTokenID(userID, config))
 	if err == nil {
 		tokens = append(tokens, t)
 	}
