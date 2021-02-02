@@ -9,10 +9,12 @@ If you'd like to connect a business account check out the business page.
 
 ## Is my bank supported? 🏦
 You can find the list of supported banks here.
+
 ##What is it? 💭
 UK banks have a pretty cool, but under-adopted feature called 'open banking' which is a set of APIs provided by all banks that allow users & companies to read data, pay & accept payments via a common interface. This page uses Truelayer to connect to your bank and read the balance & transactions, then writes that data into a spreadsheet using the Google Sheets API.
 
 I use this tool to have my current bank balance in a few different spreadsheets, i also feed it into BigQuery as an external table so i can make a Grafana dashboard for my daily spending & budgets, you can find a guide on how to do that here.
+
 ##Why should i trust you? 🕵️‍♀️
 * This project is open source, you can find it on GitHub.
 * Y.N.A.S never stores or logs any of your data & the only place the data lives is in your bank, and the spreadsheet you configure.
@@ -21,8 +23,3 @@ I use this tool to have my current bank balance in a few different spreadsheets,
 *  Y.N.A.S will only use your Google email to identify your account, send receipts, and notify you if there are any issues.
 *  Your data is never shared with a third party without your direct written or verbal consent.
 
-
-If you have any questions please feel free to email me at arussellsaw@hey.com or raise an issue on GitHub.
-
-
-Follow me on Twitter. 🦆 Read the Privacy Policy.
