@@ -57,7 +57,7 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "You need to set up your stripe subscription, go back to the homepage", http.StatusForbidden)
 		return
 	}
-	tl, err := truelayer.NewClient(ctx, u.ID)
+	tls, err := truelayer.GetClients(ctx, u.ID)
 	if err != nil {
 		slog.Error(ctx, "Error getting truelayer client: %s", err)
 		return
@@ -67,10 +67,14 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 		slog.Error(ctx, "Error getting sheets client: %s", err)
 		return
 	}
-	accs, err := tl.Accounts(ctx)
-	if err != nil {
-		slog.Error(ctx, "Error getting accounts: %s", err)
-		return
+	var accs []truelayer.Account
+	for _, tl := range tls {
+		a, err := tl.Accounts(ctx)
+		if err != nil {
+			slog.Error(ctx, "Error getting accounts: %s", err)
+			return
+		}
+		accs = append(accs, a...)
 	}
 	userSheet, err := gs.Get(ctx, u.SheetID)
 	if err != nil {
@@ -121,7 +125,7 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 			attempted = true
 			goto findSheet
 		}
-		txs, err := tl.Transactions(ctx, acc.AccountID)
+		txs, err := acc.Transactions(ctx)
 		if err != nil {
 			slog.Error(ctx, "Error getting transactions: %s", err)
 			return
@@ -141,7 +145,7 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 
 	var balances []truelayer.Balance
 	for _, acc := range accs {
-		b, err := tl.Balance(ctx, acc.AccountID)
+		b, err := acc.Balance(ctx)
 		if err != nil {
 			slog.Error(ctx, "error getting balance: %s", err)
 			return

@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/idgen"
+
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
 
 	"github.com/gorilla/mux"
@@ -72,7 +74,7 @@ func oauthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = token.Set(ctx, oauthState.Value, OauthConfig, t)
+	err = token.Set(ctx, idgen.New("tok"), oauthState.Value, "truelayer", OauthConfig, t)
 	if err != nil {
 		slog.Error(ctx, "failed to set token: %s", err)
 		return
@@ -82,7 +84,7 @@ func oauthCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 func generateStateOauthCookie(w http.ResponseWriter, id string) string {
-	var expiration = time.Now().Add(365 * 24 * time.Hour)
+	var expiration = time.Now().Add(1 * time.Hour)
 	cookie := http.Cookie{Name: "oauthstate", Value: id, Expires: expiration}
 	http.SetCookie(w, &cookie)
 	return id

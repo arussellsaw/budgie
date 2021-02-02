@@ -17,12 +17,14 @@ import (
 
 const collection = "banksheets#tokens"
 
-func Set(ctx context.Context, id string, config *oauth2.Config, token *oauth2.Token) error {
+func Set(ctx context.Context, id, owner, kind string, config *oauth2.Config, token *oauth2.Token) error {
 	var refreshToken string
 
-	existing, err := doGet(ctx, config, id)
-	if err == nil {
+	if existing, st, err := doGet(ctx, config, id); err == nil {
 		refreshToken = existing.RefreshToken
+		if st.OwnerID != owner {
+			return fmt.Errorf("existing token has different ownerID")
+		}
 	}
 
 	if token.RefreshToken == "" {
@@ -42,7 +44,9 @@ func Set(ctx context.Context, id string, config *oauth2.Config, token *oauth2.To
 	}
 
 	t := &StoredToken{
-		ID:             tokenID(id, config),
+		ID:             id,
+		OwnerID:        owner,
+		Kind:           kind,
 		KeyName:        keyName,
 		EncryptedToken: ciphertext,
 	}
@@ -55,39 +59,39 @@ func Set(ctx context.Context, id string, config *oauth2.Config, token *oauth2.To
 	return nil
 }
 
-func doGet(ctx context.Context, config *oauth2.Config, id string) (*oauth2.Token, error) {
+func doGet(ctx context.Context, config *oauth2.Config, id string) (*oauth2.Token, *StoredToken, error) {
 	fs, err := store.FromContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	st := StoredToken{}
 
-	doc, err := fs.Collection(collection).Doc(tokenID(id, config)).Get(ctx)
+	doc, err := fs.Collection(collection).Doc(id).Get(ctx)
 	if err != nil {
 		slog.Error(ctx, "code: %s", grpc.Code(err))
-		return nil, err
+		return nil, nil, err
 	}
 	err = doc.DataTo(&st)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	t := oauth2.Token{}
 	buf, err := secret.Decrypt(ctx, st.EncryptedToken, st.KeyName)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	err = json.Unmarshal(buf, &t)
 
 	if t.RefreshToken == "" {
-		slog.Warn(ctx, "Stored token has no referesh token! %s", tokenID(id, config))
+		slog.Warn(ctx, "Stored token has no referesh token! %s", id)
 	}
-	return &t, nil
+	return &t, &st, nil
 }
 
 func Get(ctx context.Context, config *oauth2.Config, id string) (*oauth2.Token, error) {
-	t, err := doGet(ctx, config, id)
+	t, st, err := doGet(ctx, config, id)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +105,7 @@ func Get(ctx context.Context, config *oauth2.Config, id string) (*oauth2.Token, 
 	// token was refreshed, let's store the new access token
 	if token.AccessToken != t.AccessToken {
 		slog.Info(ctx, "Access token was refreshed, setting new token")
-		err = Set(ctx, id, config, token)
+		err = Set(ctx, id, st.OwnerID, st.Kind, config, token)
 		if err != nil {
 			return nil, err
 		}
@@ -109,43 +113,70 @@ func Get(ctx context.Context, config *oauth2.Config, id string) (*oauth2.Token, 
 	return token, nil
 }
 
-func GetSource(ctx context.Context, config *oauth2.Config, id string) (oauth2.TokenSource, error) {
+func ListByUser(ctx context.Context, userID, kind string, config *oauth2.Config) ([]*oauth2.Token, error) {
 	fs, err := store.FromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	st := StoredToken{}
+	var tokens []*oauth2.Token
+	// maybe get old style token
+	t, err := Get(ctx, config, userID)
+	if err == nil {
+		tokens = append(tokens, t)
+	}
 
-	doc, err := fs.Collection(collection).Doc(tokenID(id, config)).Get(ctx)
+	docs, err := fs.Collection(collection).
+		Where("OwnerID", "==", userID).
+		Where("Kind", "==", kind).Documents(ctx).GetAll()
 	if err != nil {
 		slog.Error(ctx, "code: %s", grpc.Code(err))
 		return nil, err
 	}
-	err = doc.DataTo(&st)
-	if err != nil {
-		return nil, err
-	}
+	for _, doc := range docs {
+		st := StoredToken{}
+		err = doc.DataTo(&st)
+		if err != nil {
+			return nil, err
+		}
 
-	t := oauth2.Token{}
-	buf, err := secret.Decrypt(ctx, st.EncryptedToken, st.KeyName)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(buf, &t)
-	if err != nil {
-		return nil, err
-	}
+		t := oauth2.Token{}
+		buf, err := secret.Decrypt(ctx, st.EncryptedToken, st.KeyName)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(buf, &t)
 
-	return config.TokenSource(ctx, &t), nil
+		if t.RefreshToken == "" {
+			slog.Warn(ctx, "Stored token has no referesh token! %s", st.ID)
+		}
+		src := config.TokenSource(ctx, &t)
+
+		token, err := src.Token()
+		if err != nil {
+			return nil, errors.Wrap(err, "getting token")
+		}
+		// token was refreshed, let's store the new access token
+		if token.AccessToken != t.AccessToken {
+			slog.Info(ctx, "Access token was refreshed, setting new token")
+			err = Set(ctx, st.ID, st.OwnerID, st.Kind, config, token)
+			if err != nil {
+				return nil, err
+			}
+		}
+		tokens = append(tokens, token)
+	}
+	return tokens, nil
 }
 
 type StoredToken struct {
 	ID             string
+	OwnerID        string
+	Kind           string
 	KeyName        string
 	EncryptedToken string
 }
 
-func tokenID(id string, config *oauth2.Config) string {
+func LegacyTokenID(id string, config *oauth2.Config) string {
 	return fmt.Sprintf("%s#%s", id, config.ClientID)
 }

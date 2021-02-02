@@ -123,7 +123,7 @@ func oauthGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = token.Set(ctx, oauthState.Value, OauthConfig, t)
+	err = token.Set(ctx, token.LegacyTokenID(oauthState.Value, OauthConfig), oauthState.Value, "sheets", OauthConfig, t)
 	if err != nil {
 		slog.Error(ctx, "failed to set token: %s", err)
 		return

@@ -12,14 +12,12 @@ import (
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/token"
 )
 
-var ErrSheetNotFound = errors.New("not_found.sheet: couldn't find sheet in context")
-
 type Client struct {
 	c *sheets.Service
 }
 
 func NewClient(ctx context.Context, userID string) (*Client, error) {
-	t, err := token.Get(ctx, OauthConfig, userID)
+	t, err := token.Get(ctx, OauthConfig, token.LegacyTokenID(userID, OauthConfig))
 	if err != nil {
 		return nil, errors.Wrap(err, "getting token")
 	}
@@ -41,7 +39,7 @@ func NewClient(ctx context.Context, userID string) (*Client, error) {
 func (c *Client) Create(ctx context.Context) (string, error) {
 	res, err := c.c.Spreadsheets.Create(&sheets.Spreadsheet{
 		Properties: &sheets.SpreadsheetProperties{
-			Title: "Banksheets Export",
+			Title: "Y.N.A.S Export",
 		},
 	}).Context(ctx).Do()
 	if err != nil {

@@ -1,6 +1,9 @@
 package truelayer
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type Account struct {
 	UpdateTimestamp time.Time     `json:"update_timestamp"`
@@ -10,6 +13,16 @@ type Account struct {
 	Currency        string        `json:"currency"`
 	AccountNumber   AccountNumber `json:"account_number"`
 	Provider        Provider      `json:"provider"`
+
+	client *Client
+}
+
+func (a *Account) Transactions(ctx context.Context) ([]Transaction, error) {
+	return a.client.Transactions(ctx, a.AccountID)
+}
+
+func (a *Account) Balance(ctx context.Context) (*Balance, error) {
+	return a.client.Balance(ctx, a.AccountID)
 }
 
 type AccountNumber struct {
@@ -17,10 +30,6 @@ type AccountNumber struct {
 	Number   string `json:"number"`
 	SortCode string `json:"sort_code"`
 	SwiftBic string `json:"swift_bic"`
-}
-
-type Provider struct {
-	ProviderID string `json:"provider_id"`
 }
 
 type Transaction struct {
@@ -53,4 +62,22 @@ type Balance struct {
 	Current         float64   `json:"current"`
 	Overdraft       float64   `json:"overdraft"`
 	UpdateTimestamp time.Time `json:"update_timestamp"`
+}
+
+type Metadata struct {
+	ClientID               string    `json:"client_id"`
+	CredentialsID          string    `json:"credentials_id"`
+	ConsentStatus          string    `json:"consent_status"`
+	ConsentStatusUpdatedAt time.Time `json:"consent_status_updated_at"`
+	ConsentCreatedAt       time.Time `json:"consent_created_at"`
+	ConsentExpiresAt       time.Time `json:"consent_expires_at"`
+	Provider               Provider  `json:"provider"`
+	Scopes                 []string  `json:"scopes"`
+	PrivacyPolicy          string    `json:"privacy_policy"`
+}
+
+type Provider struct {
+	DisplayName string `json:"display_name"`
+	LogoURI     string `json:"logo_uri"`
+	ProviderID  string `json:"provider_id"`
 }

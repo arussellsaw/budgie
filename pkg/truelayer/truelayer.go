@@ -22,19 +22,23 @@ const (
 	baseURL = "https://api.truelayer.com"
 )
 
-func NewClient(ctx context.Context, userID string) (*Client, error) {
-	t, err := token.Get(ctx, OauthConfig, userID)
+func GetClients(ctx context.Context, userID string) ([]*Client, error) {
+	ts, err := token.ListByUser(ctx, userID, "truelayer", OauthConfig)
 	if err != nil {
 		return nil, err
 	}
-	return &Client{
-		userID: userID,
-		t:      t,
-		http: &http.Client{
-			Transport: http.DefaultTransport,
-			Timeout:   10 * time.Second,
-		},
-	}, nil
+	var cs []*Client
+	for _, t := range ts {
+		cs = append(cs, &Client{
+			userID: userID,
+			t:      t,
+			http: &http.Client{
+				Transport: http.DefaultTransport,
+				Timeout:   300 * time.Second,
+			},
+		})
+	}
+	return cs, nil
 }
 
 type Client struct {
@@ -67,6 +71,9 @@ func (c *Client) Accounts(ctx context.Context) ([]Account, error) {
 		Error   string
 	}{}
 	err = json.NewDecoder(res.Body).Decode(&response)
+	for i := range response.Results {
+		response.Results[i].client = c
+	}
 	return response.Results, err
 }
 
@@ -118,4 +125,39 @@ func (c *Client) Balance(ctx context.Context, accountID string) (*Balance, error
 		return nil, fmt.Errorf("unexpected length: %v", len(response.Results))
 	}
 	return &response.Results[0], err
+}
+
+func (c *Client) Metadata(ctx context.Context) (*Metadata, error) {
+	var ms []Metadata
+	err := c.doRequest(ctx, "/data/v1/me", &ms)
+	if err != nil {
+		return nil, nil
+	}
+	if len(ms) == 0 {
+		return nil, fmt.Errorf("not found")
+	}
+	return &ms[0], nil
+}
+
+func (c *Client) doRequest(ctx context.Context, path string, results interface{}) error {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		baseURL+path,
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+	c.authRequest(req)
+	res, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+	response := struct {
+		Results interface{} `json:"results"`
+	}{}
+	response.Results = results
+	err = json.NewDecoder(res.Body).Decode(&response)
+	return err
 }

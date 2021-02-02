@@ -24,7 +24,7 @@ type indexData struct {
 	HasStripe            bool
 	StripePublishableKey string
 	StripePriceID        string
-	Accounts             []truelayer.Account
+	Accounts             []truelayer.Metadata
 }
 
 func handleIndex(w http.ResponseWriter, r *http.Request) {
@@ -54,21 +54,26 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func hasTruelayer(ctx context.Context, user *domain.User) (bool, []truelayer.Account) {
+func hasTruelayer(ctx context.Context, user *domain.User) (bool, []truelayer.Metadata) {
 	if user == nil {
 		return false, nil
 	}
-	tl, err := truelayer.NewClient(ctx, user.ID)
+	tls, err := truelayer.GetClients(ctx, user.ID)
 	if err != nil {
 		slog.Error(ctx, "error getting truelayer client: %s", err)
 		return false, nil
 	}
-	accs, err := tl.Accounts(ctx)
-	if err != nil {
-		slog.Error(ctx, "error getting authorised accounts: %s", err)
-		return false, nil
+	var out []truelayer.Metadata
+	for _, tl := range tls {
+		slog.Info(ctx, "getting account")
+		m, err := tl.Metadata(ctx)
+		if err != nil {
+			slog.Error(ctx, "error getting connection metadata: %s", err)
+		} else if m != nil {
+			out = append(out, *m)
+		}
 	}
-	return len(accs) != 0, accs
+	return len(out) != 0, out
 }
 
 func hasSheets(ctx context.Context, user *domain.User) bool {
