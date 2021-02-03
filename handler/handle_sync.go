@@ -67,14 +67,25 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 		slog.Error(ctx, "Error getting sheets client: %s", err)
 		return
 	}
-	var accs []truelayer.Account
+	var accs []truelayer.AbstractAccount
 	for _, tl := range tls {
-		a, err := tl.Accounts(ctx)
+		as, err := tl.Accounts(ctx)
 		if err != nil {
 			slog.Error(ctx, "Error getting accounts: %s", err)
 			return
 		}
-		accs = append(accs, a...)
+		for _, a := range as {
+			a := a
+			accs = append(accs, a)
+		}
+		cs, err := tl.Cards(ctx)
+		if err != nil {
+			slog.Error(ctx, "Error getting cards: %s", err)
+		}
+		for _, c := range cs {
+			c := c
+			accs = append(accs, c)
+		}
 	}
 	userSheet, err := gs.Get(ctx, u.SheetID)
 	if err != nil {
@@ -90,7 +101,7 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 	findSheet:
 		var accSheet *gsheets.Sheet
 		for _, sheet := range userSheet.Sheets {
-			if sheet.Properties.Title == acc.DisplayName {
+			if sheet.Properties.Title == acc.Name() {
 				accSheet = sheet
 			}
 			if sheet.Properties.Title == "Sheet1" {
@@ -107,7 +118,7 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 					{
 						AddSheet: &gsheets.AddSheetRequest{
 							Properties: &gsheets.SheetProperties{
-								Title: acc.DisplayName,
+								Title: acc.Name(),
 							},
 						},
 					},
@@ -233,7 +244,7 @@ func buildRows(txs []truelayer.Transaction) []*gsheets.RowData {
 	return rows
 }
 
-func balanceUpdate(accs []truelayer.Account, balances []truelayer.Balance, sheet *gsheets.Sheet) *gsheets.Request {
+func balanceUpdate(accs []truelayer.AbstractAccount, balances []truelayer.Balance, sheet *gsheets.Sheet) *gsheets.Request {
 	return &gsheets.Request{
 		UpdateCells: &gsheets.UpdateCellsRequest{
 			Fields: "*",
@@ -252,7 +263,7 @@ func balanceUpdate(accs []truelayer.Account, balances []truelayer.Balance, sheet
 						Values: []*gsheets.CellData{
 							{
 								UserEnteredValue: &gsheets.ExtendedValue{
-									StringValue: &accs[i].DisplayName,
+									StringValue: strPtr(accs[i].Name()),
 								},
 							},
 							{
@@ -277,4 +288,11 @@ func balanceUpdate(accs []truelayer.Account, balances []truelayer.Balance, sheet
 			}(),
 		},
 	}
+}
+
+func strPtr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }

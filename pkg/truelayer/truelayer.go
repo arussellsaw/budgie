@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sort"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -77,66 +76,49 @@ func (c *Client) Accounts(ctx context.Context) ([]Account, error) {
 	return response.Results, err
 }
 
-func (c *Client) Transactions(ctx context.Context, accountID string) ([]Transaction, error) {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		fmt.Sprintf("%s/data/v1/accounts/%s/transactions", baseURL, accountID),
-		nil,
-	)
+func (c *Client) Transactions(ctx context.Context, kind, accountID string) ([]Transaction, error) {
+	var res []Transaction
+	err := c.doRequest(ctx, fmt.Sprintf("/data/v1/%s/%s/transactions", kind, accountID), &res)
 	if err != nil {
 		return nil, err
 	}
-	c.authRequest(req)
-	res, err := c.http.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	response := struct {
-		Results []Transaction `json:"results"`
-	}{}
-	err = json.NewDecoder(res.Body).Decode(&response)
-	sort.Slice(response.Results, func(i, j int) bool {
-		return response.Results[i].Timestamp < response.Results[j].Timestamp
-	})
-	return response.Results, err
+	return res, err
 }
 
-func (c *Client) Balance(ctx context.Context, accountID string) (*Balance, error) {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		fmt.Sprintf("%s/data/v1/accounts/%s/balance", baseURL, accountID),
-		nil,
-	)
+func (c *Client) Balance(ctx context.Context, kind, accountID string) (*Balance, error) {
+	var res []Balance
+	err := c.doRequest(ctx, fmt.Sprintf("/data/v1/%s/%s/balance", kind, accountID), &res)
 	if err != nil {
 		return nil, err
 	}
-	c.authRequest(req)
-	res, err := c.http.Do(req)
-	if err != nil {
-		return nil, err
+	if len(res) != 1 {
+		return nil, fmt.Errorf("unexpected length: %v", len(res))
 	}
-	response := struct {
-		Results []Balance `json:"results"`
-	}{}
-	err = json.NewDecoder(res.Body).Decode(&response)
-	if len(response.Results) != 1 {
-		return nil, fmt.Errorf("unexpected length: %v", len(response.Results))
-	}
-	return &response.Results[0], err
+	return &res[0], err
 }
 
 func (c *Client) Metadata(ctx context.Context) (*Metadata, error) {
 	var ms []Metadata
 	err := c.doRequest(ctx, "/data/v1/me", &ms)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 	if len(ms) == 0 {
 		return nil, fmt.Errorf("not found")
 	}
 	return &ms[0], nil
+}
+
+func (c *Client) Cards(ctx context.Context) ([]Card, error) {
+	var cs []Card
+	err := c.doRequest(ctx, "/data/v1/cards", &cs)
+	if err != nil {
+		return nil, err
+	}
+	for i := range cs {
+		cs[i].client = c
+	}
+	return cs, nil
 }
 
 func (c *Client) doRequest(ctx context.Context, path string, results interface{}) error {
@@ -160,4 +142,13 @@ func (c *Client) doRequest(ctx context.Context, path string, results interface{}
 	response.Results = results
 	err = json.NewDecoder(res.Body).Decode(&response)
 	return err
+}
+
+func Providers(ctx context.Context) ([]Provider, error) {
+	res, err := http.Get("https://auth.truelayer.com/api/providers")
+	if err != nil {
+		return nil, err
+	}
+	var ps []Provider
+	return ps, json.NewDecoder(res.Body).Decode(&ps)
 }

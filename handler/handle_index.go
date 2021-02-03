@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/stripe"
 
@@ -36,10 +37,30 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
+
 	u := domain.UserFromContext(ctx)
-	hasTL, accs := hasTruelayer(ctx, u)
-	hasGS := hasSheets(ctx, u)
-	hasS := hasStripe(ctx, u)
+	var (
+		g     sync.WaitGroup
+		hasTL bool
+		accs  []truelayer.Metadata
+		hasGS bool
+		hasS  bool
+	)
+	if u != nil {
+		g.Add(3)
+		go func() {
+			hasTL, accs = hasTruelayer(ctx, u)
+			g.Done()
+		}()
+		go func() {
+			hasGS = hasSheets(ctx, u)
+			g.Done()
+		}()
+		go func() {
+			hasS = hasStripe(ctx, u)
+			g.Done()
+		}()
+	}
 	err = t.Execute(w, indexData{
 		User:                 u,
 		HasTruelayer:         hasTL,

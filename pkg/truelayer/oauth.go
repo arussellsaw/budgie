@@ -6,16 +6,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/idgen"
-
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
-
 	"github.com/gorilla/mux"
 	"github.com/monzo/slog"
 	"golang.org/x/oauth2"
 
 	"github.com/arussellsaw/youneedaspreadsheet/domain"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/idgen"
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/token"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
 )
 
 var (
@@ -33,6 +31,7 @@ func Init(ctx context.Context, m *mux.Router) error {
 		Scopes: []string{
 			"accounts",
 			"balance",
+			"cards",
 			"transactions",
 			"offline_access",
 		},

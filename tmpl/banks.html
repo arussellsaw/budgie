@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>🏦 👉 📊 You Need A Spreadsheet</title>
+    <meta name="title" content="🏦 👉 📊 You Need a Spreadsheet">
+    <meta name="description" content="Get on top of your finances by tracking all of your bank accounts & credit cards in Google Sheets">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://youneedaspreadsheet.com">
+    <meta property="og:title" content="🏦 👉 📊 You Need a Spreadsheet">
+    <meta property="og:description" content="Get on top of your finances by tracking all of your bank accounts & credit cards in Google Sheets">
+    <meta property="og:image" content="/static/preview.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://metatags.io/">
+    <meta property="twitter:title" content="🏦 👉 📊 You Need a Spreadsheet">
+    <meta property="twitter:description" content="Get on top of your finances by tracking all of your bank accounts & credit cards in Google Sheets">
+    <meta property="twitter:image" content="/static/preview.png">
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=0.86, maximum-scale=5.0, minimum-scale=0.86">
+    <script async defer data-domain="youneedaspreadsheet.com" src="https://plausible.io/js/plausible.js"></script>
+    <meta charset="UTF-8">
+</head>
+<body>
+<div class="max-w-screen-sm mx-auto mt-20 mb-20 p-4">
+    {{ range .Providers }}
+        <div class="flex flex-row items-center h-20">
+            <img class="h-20 w-20 mr-5" alt="{{.DisplayName}} logo" src="{{ .LogoURL }}"/>
+        <p class="m-0 p-0 text-xl font-bold">{{ .DisplayName }}</p>
+        </div>
+    {{ end }}
+</div>
+</body>
+</html>

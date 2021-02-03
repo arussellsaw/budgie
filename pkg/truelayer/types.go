@@ -17,12 +17,20 @@ type Account struct {
 	client *Client
 }
 
-func (a *Account) Transactions(ctx context.Context) ([]Transaction, error) {
-	return a.client.Transactions(ctx, a.AccountID)
+func (a Account) ID() string {
+	return a.AccountID
 }
 
-func (a *Account) Balance(ctx context.Context) (*Balance, error) {
-	return a.client.Balance(ctx, a.AccountID)
+func (a Account) Name() string {
+	return a.DisplayName
+}
+
+func (a Account) Transactions(ctx context.Context) ([]Transaction, error) {
+	return a.client.Transactions(ctx, "accounts", a.AccountID)
+}
+
+func (a Account) Balance(ctx context.Context) (*Balance, error) {
+	return a.client.Balance(ctx, "accounts", a.AccountID)
 }
 
 type AccountNumber struct {
@@ -79,5 +87,53 @@ type Metadata struct {
 type Provider struct {
 	DisplayName string `json:"display_name"`
 	LogoURI     string `json:"logo_uri"`
+	LogoURL     string `json:"logo_url"`
 	ProviderID  string `json:"provider_id"`
+}
+
+type Card struct {
+	AccountID         string    `json:"account_id"`
+	CardNetwork       string    `json:"card_network"`
+	CardType          string    `json:"card_type"`
+	Currency          string    `json:"currency"`
+	DisplayName       string    `json:"display_name"`
+	PartialCardNumber string    `json:"partial_card_number"`
+	NameOnCard        string    `json:"name_on_card"`
+	ValidFrom         string    `json:"valid_from"`
+	ValidTo           string    `json:"valid_to"`
+	UpdateTimestamp   time.Time `json:"update_timestamp"`
+	Provider          Provider  `json:"provider"`
+
+	client *Client
+}
+
+func (c Card) ID() string {
+	return c.AccountID
+}
+
+func (c Card) Name() string {
+	return c.DisplayName
+}
+
+func (c Card) Transactions(ctx context.Context) ([]Transaction, error) {
+	return c.client.Transactions(ctx, "cards", c.AccountID)
+}
+
+func (c Card) Balance(ctx context.Context) (*Balance, error) {
+	return c.client.Balance(ctx, "cards", c.AccountID)
+}
+
+type Balancer interface {
+	Balance(context.Context) (*Balance, error)
+}
+
+type Transactioner interface {
+	Transactions(context.Context) ([]Transaction, error)
+}
+
+type AbstractAccount interface {
+	ID() string
+	Name() string
+	Balancer
+	Transactioner
 }
