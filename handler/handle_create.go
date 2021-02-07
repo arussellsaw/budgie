@@ -6,12 +6,13 @@ import (
 	"github.com/monzo/slog"
 
 	"github.com/arussellsaw/youneedaspreadsheet/domain"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/sheets"
 )
 
 func handleCreateSheet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	u := domain.UserFromContext(ctx)
+	u := authn.User(ctx)
 	if u == nil {
 		return
 	}

@@ -69,7 +69,6 @@ func doGet(ctx context.Context, config *oauth2.Config, id string) (*oauth2.Token
 
 	doc, err := fs.Collection(collection).Doc(id).Get(ctx)
 	if err != nil {
-		slog.Error(ctx, "code: %s", grpc.Code(err))
 		return nil, nil, err
 	}
 	err = doc.DataTo(&st)
@@ -93,7 +92,7 @@ func doGet(ctx context.Context, config *oauth2.Config, id string) (*oauth2.Token
 func Get(ctx context.Context, config *oauth2.Config, id string) (*oauth2.Token, error) {
 	t, st, err := doGet(ctx, config, id)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "getting old token")
 	}
 	src := config.TokenSource(ctx, t)
 
@@ -104,7 +103,7 @@ func Get(ctx context.Context, config *oauth2.Config, id string) (*oauth2.Token, 
 
 	// token was refreshed, let's store the new access token
 	if token.AccessToken != t.AccessToken {
-		slog.Info(ctx, "Access token was refreshed, setting new token")
+		slog.Info(ctx, "Access token was refreshed, setting new token %s", st.ID)
 		err = Set(ctx, id, st.OwnerID, st.Kind, config, token)
 		if err != nil {
 			return nil, err
@@ -137,13 +136,13 @@ func ListByUser(ctx context.Context, userID, kind string, config *oauth2.Config)
 		st := StoredToken{}
 		err = doc.DataTo(&st)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "unmarshaling token")
 		}
 
 		t := oauth2.Token{}
 		buf, err := secret.Decrypt(ctx, st.EncryptedToken, st.KeyName)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "decrypting token")
 		}
 		err = json.Unmarshal(buf, &t)
 
@@ -158,7 +157,7 @@ func ListByUser(ctx context.Context, userID, kind string, config *oauth2.Config)
 		}
 		// token was refreshed, let's store the new access token
 		if token.AccessToken != t.AccessToken {
-			slog.Info(ctx, "Access token was refreshed, setting new token")
+			slog.Info(ctx, "Access token was refreshed, setting new token %s", st.ID)
 			err = Set(ctx, st.ID, st.OwnerID, st.Kind, config, token)
 			if err != nil {
 				return nil, err

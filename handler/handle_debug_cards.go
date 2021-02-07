@@ -4,14 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/truelayer"
-
-	"github.com/arussellsaw/youneedaspreadsheet/domain"
 )
 
 func handleDebugCards(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	u := domain.UserFromContext(ctx)
+	u := authn.User(ctx)
 	if u == nil {
 		http.Error(w, "unauthorised", http.StatusForbidden)
 		return

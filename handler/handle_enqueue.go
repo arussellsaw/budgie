@@ -3,9 +3,11 @@ package handler
 import (
 	"net/http"
 
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/stripe"
 
 	"cloud.google.com/go/pubsub"
+
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
 
 	"github.com/monzo/slog"
@@ -17,7 +19,7 @@ func handleEnqueue(w http.ResponseWriter, r *http.Request) {
 	var (
 		ctx   = r.Context()
 		users []domain.User
-		u     = domain.UserFromContext(ctx)
+		u     = authn.User(ctx)
 		err   error
 	)
 	if u != nil {
@@ -36,12 +38,14 @@ func handleEnqueue(w http.ResponseWriter, r *http.Request) {
 	}
 	t := ps.Topic("sync-users")
 	for _, user := range users {
+		user := user
 		ok, err := stripe.HasSubscription(ctx, &user)
 		if err != nil {
 			slog.Error(ctx, "error checking subscription: %s", err)
 			continue
 		}
 		if !ok {
+			slog.Warn(ctx, "not enqueueing lapsed user: %s", user.ID)
 			continue
 		}
 		result := t.Publish(ctx, &pubsub.Message{

@@ -4,15 +4,14 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/truelayer"
-
-	"github.com/arussellsaw/youneedaspreadsheet/domain"
 )
 
 func handleDebugTransactions(w http.ResponseWriter, r *http.Request) {
 	accountID := r.URL.Query().Get("account_id")
 	ctx := r.Context()
-	u := domain.UserFromContext(ctx)
+	u := authn.User(ctx)
 	if u == nil {
 		http.Error(w, "unauthorised", http.StatusForbidden)
 		return
@@ -34,7 +33,7 @@ func handleDebugTransactions(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, acc := range out {
 		if acc.AccountID == accountID {
-			res, err := acc.Transactions(ctx)
+			res, err := acc.Transactions(ctx, false)
 			if err != nil {
 				http.Error(w, err.Error(), 500)
 				return

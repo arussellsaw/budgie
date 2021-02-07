@@ -25,8 +25,8 @@ func (a Account) Name() string {
 	return a.DisplayName
 }
 
-func (a Account) Transactions(ctx context.Context) ([]Transaction, error) {
-	return a.client.Transactions(ctx, "accounts", a.AccountID)
+func (a Account) Transactions(ctx context.Context, historic bool) ([]Transaction, error) {
+	return a.client.Transactions(ctx, "accounts", a.AccountID, historic)
 }
 
 func (a Account) Balance(ctx context.Context) (*Balance, error) {
@@ -115,12 +115,18 @@ func (c Card) Name() string {
 	return c.DisplayName
 }
 
-func (c Card) Transactions(ctx context.Context) ([]Transaction, error) {
-	return c.client.Transactions(ctx, "cards", c.AccountID)
+func (c Card) Transactions(ctx context.Context, historic bool) ([]Transaction, error) {
+	return c.client.Transactions(ctx, "cards", c.AccountID, historic)
 }
 
 func (c Card) Balance(ctx context.Context) (*Balance, error) {
-	return c.client.Balance(ctx, "cards", c.AccountID)
+	b, err := c.client.Balance(ctx, "cards", c.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	b.Available = b.Available * -1
+	b.Current = b.Current * -1
+	return b, nil
 }
 
 type Balancer interface {
@@ -128,7 +134,7 @@ type Balancer interface {
 }
 
 type Transactioner interface {
-	Transactions(context.Context) ([]Transaction, error)
+	Transactions(context.Context, bool) ([]Transaction, error)
 }
 
 type AbstractAccount interface {

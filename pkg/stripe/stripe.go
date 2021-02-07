@@ -21,6 +21,7 @@ import (
 	"github.com/stripe/stripe-go/v71/webhook"
 
 	"github.com/arussellsaw/youneedaspreadsheet/domain"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
 )
 
@@ -71,7 +72,7 @@ func HasSubscription(ctx context.Context, u *domain.User) (bool, error) {
 }
 
 func handleCreateCheckoutSession(w http.ResponseWriter, r *http.Request) {
-	u := domain.UserFromContext(r.Context())
+	u := authn.User(r.Context())
 	if u == nil {
 		return
 	}
@@ -137,7 +138,7 @@ func handleSuccess(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 	slog.Info(ctx, "payment success: %s", sessionID)
-	u := domain.UserFromContext(ctx)
+	u := authn.User(ctx)
 	if u == nil {
 		slog.Error(ctx, "got subscription success from unauthenticated user")
 		return

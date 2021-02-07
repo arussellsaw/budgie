@@ -10,7 +10,7 @@ import (
 	"github.com/monzo/slog"
 	"golang.org/x/oauth2"
 
-	"github.com/arussellsaw/youneedaspreadsheet/domain"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/idgen"
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/token"
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
@@ -45,7 +45,7 @@ func Init(ctx context.Context, m *mux.Router) error {
 }
 
 func oauthLogin(w http.ResponseWriter, r *http.Request) {
-	u := domain.UserFromContext(r.Context())
+	u := authn.User(r.Context())
 	if u == nil {
 		http.Error(w, "unauthorized", http.StatusForbidden)
 		return

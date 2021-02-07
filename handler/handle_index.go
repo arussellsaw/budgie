@@ -7,15 +7,13 @@ import (
 	"os"
 	"sync"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/stripe"
-
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/sheets"
-
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/truelayer"
+	"github.com/monzo/slog"
 
 	"github.com/arussellsaw/youneedaspreadsheet/domain"
-
-	"github.com/monzo/slog"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/sheets"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/stripe"
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/truelayer"
 )
 
 type indexData struct {
@@ -38,7 +36,7 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u := domain.UserFromContext(ctx)
+	u := authn.User(ctx)
 	var (
 		g     sync.WaitGroup
 		hasTL bool
@@ -60,6 +58,7 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 			hasS = hasStripe(ctx, u)
 			g.Done()
 		}()
+		g.Wait()
 	}
 	err = t.Execute(w, indexData{
 		User:                 u,
@@ -86,7 +85,6 @@ func hasTruelayer(ctx context.Context, user *domain.User) (bool, []truelayer.Met
 	}
 	var out []truelayer.Metadata
 	for _, tl := range tls {
-		slog.Info(ctx, "getting account")
 		m, err := tl.Metadata(ctx)
 		if err != nil {
 			slog.Error(ctx, "error getting connection metadata: %s", err)

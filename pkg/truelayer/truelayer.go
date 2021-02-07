@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"time"
+
+	"github.com/monzo/slog"
 
 	"golang.org/x/oauth2"
 
@@ -13,11 +16,6 @@ import (
 )
 
 const (
-	// sandbox credentials
-	// TODO: not this
-	clientID     = "sandbox-sheets-35b0b7"
-	clientSecret = "2b1dba10-b1aa-434e-9dd0-b0ee11e84293"
-
 	baseURL = "https://api.truelayer.com"
 )
 
@@ -76,13 +74,38 @@ func (c *Client) Accounts(ctx context.Context) ([]Account, error) {
 	return response.Results, err
 }
 
-func (c *Client) Transactions(ctx context.Context, kind, accountID string) ([]Transaction, error) {
-	var res []Transaction
-	err := c.doRequest(ctx, fmt.Sprintf("/data/v1/%s/%s/transactions", kind, accountID), &res)
-	if err != nil {
-		return nil, err
+func (c *Client) Transactions(ctx context.Context, kind, accountID string, historic bool) ([]Transaction, error) {
+	t := time.Now()
+	txs := make(map[string]Transaction)
+	for {
+		var res []Transaction
+		ts := t.Add(-88 * 24 * time.Hour).Format("2006-01-02T15:04:05Z")
+		now := t.Format("2006-01-02T15:04:05Z")
+		slog.Info(ctx, "Getting txs for %s %s %s", accountID, ts, now)
+		err := c.doRequest(ctx, fmt.Sprintf("/data/v1/%s/%s/transactions?from=%s&to=%s", kind, accountID, ts, now), &res)
+		if err != nil {
+			return nil, err
+		}
+		slog.Info(ctx, "got %v transactions", len(res))
+		if len(res) == 0 {
+			break
+		}
+		for _, tx := range res {
+			txs[tx.TransactionID] = tx
+		}
+		if !historic {
+			break
+		}
+		t = t.AddDate(0, 0, -87)
 	}
-	return res, err
+	var out []Transaction
+	for _, tx := range txs {
+		out = append(out, tx)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Timestamp < out[j].Timestamp
+	})
+	return out, nil
 }
 
 func (c *Client) Balance(ctx context.Context, kind, accountID string) (*Balance, error) {

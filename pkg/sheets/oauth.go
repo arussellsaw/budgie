@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
+
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
 
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/idgen"
@@ -45,7 +47,7 @@ func Init(ctx context.Context, m *mux.Router) error {
 
 func oauthGoogleLogin(w http.ResponseWriter, r *http.Request) {
 	userID := idgen.New("usr")
-	u := domain.UserFromContext(r.Context())
+	u := authn.User(r.Context())
 	if u != nil {
 		userID = u.ID
 	}
@@ -129,7 +131,7 @@ func oauthGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sess, err := u.Session()
+	sess, err := authn.Session(u.ID)
 	if err != nil {
 		slog.Error(ctx, "Error creating session: %s", err)
 		http.Error(w, "error creating session", 500)

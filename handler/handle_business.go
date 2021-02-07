@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/arussellsaw/youneedaspreadsheet/domain"
-
 	"github.com/monzo/slog"
+
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
 )
 
 func handleBusiness(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +19,7 @@ func handleBusiness(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	u := domain.UserFromContext(ctx)
+	u := authn.User(ctx)
 	hasTL, accs := hasTruelayer(ctx, u)
 	hasGS := hasSheets(ctx, u)
 	hasS := hasStripe(ctx, u)

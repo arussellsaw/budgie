@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/stripe"
 
 	sloggcloud "github.com/arussellsaw/slog-gcloud"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/arussellsaw/youneedaspreadsheet/domain"
 	"github.com/arussellsaw/youneedaspreadsheet/handler"
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/idgen"
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/logging"
@@ -70,7 +70,7 @@ func main() {
 
 	srv := http.Server{
 		Addr:    ":8080",
-		Handler: sloggcloud.CloudContextMiddleware(domain.UserSessionMiddleware(r)),
+		Handler: sloggcloud.CloudContextMiddleware(authn.UserSessionMiddleware(r)),
 		BaseContext: func(l net.Listener) context.Context {
 			return ctx
 		},
