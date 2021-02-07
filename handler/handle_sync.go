@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
+
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/logging"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/monzo/slog"
@@ -42,6 +45,7 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	ctx = logging.WithParams(ctx, map[string]string{"user_id": u.ID})
 
 	slog.Info(ctx, "sync user: %s", u.ID)
 
@@ -100,7 +104,10 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 	findSheet:
 		var accSheet *gsheets.Sheet
 		for _, sheet := range userSheet.Sheets {
-			if sheet.Properties.Title == acc.Name() {
+			if strings.HasPrefix(sheet.Properties.Title, acc.Name()) {
+				if len(sheet.Properties.Title) > len(acc.Name()) && !strings.HasSuffix(sheet.Properties.Title, acc.ID()) {
+					continue
+				}
 				accSheet = sheet
 			}
 			if sheet.Properties.Title == "Sheet1" {
@@ -117,14 +124,18 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 					{
 						AddSheet: &gsheets.AddSheetRequest{
 							Properties: &gsheets.SheetProperties{
-								Title: acc.Name(),
+								Title: acc.Name() + acc.ID(),
+								GridProperties: &gsheets.GridProperties{
+									ColumnCount: 7,
+									RowCount:    5,
+								},
 							},
 						},
 					},
 				},
 			}).Context(ctx).Do()
 			if err != nil {
-				slog.Error(ctx, "Error adding new sheet: %s", err)
+				slog.Error(ctx, "Error adding new sheet %s: %s", u.ID, err)
 				return
 			}
 			userSheet, err = gs.Get(ctx, u.SheetID)
@@ -147,7 +158,7 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 		if update == nil {
 			continue
 		}
-		reqs = append(reqs, update)
+		reqs = append(reqs, update...)
 
 	}
 	u.LastSync = time.Now()
@@ -171,7 +182,7 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 		Requests: reqs,
 	}).Context(ctx).Do()
 	if err != nil {
-		slog.Error(ctx, "Error updating sheet: %s", err)
+		slog.Error(ctx, "Error updating sheet %s : %s", u.ID, err)
 		return
 	}
 	if r.Method == http.MethodGet {
@@ -179,7 +190,7 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func buildUpdate(txs []truelayer.Transaction, sheet *gsheets.Sheet) *gsheets.Request {
+func buildUpdate(txs []truelayer.Transaction, sheet *gsheets.Sheet) []*gsheets.Request {
 	if len(sheet.Data) == 0 {
 		return nil
 	}
@@ -191,17 +202,44 @@ func buildUpdate(txs []truelayer.Transaction, sheet *gsheets.Sheet) *gsheets.Req
 		txid := *row.Values[0].UserEnteredValue.StringValue
 		existing[txid] = struct{}{}
 	}
-	return &gsheets.Request{
-		UpdateCells: &gsheets.UpdateCellsRequest{
-			Fields: "*",
-			Range: &gsheets.GridRange{
-				SheetId:          sheet.Properties.SheetId,
-				StartRowIndex:    0,
-				StartColumnIndex: 0,
-				EndColumnIndex:   0,
-				EndRowIndex:      0,
+	rows := buildRows(txs, sheet.Data[0].RowData)
+	var reqs []*gsheets.Request
+	if len(rows) > len(existing) {
+		reqs = append(reqs, &gsheets.Request{
+			UpdateCells: &gsheets.UpdateCellsRequest{
+				Fields: "*",
+				Range: &gsheets.GridRange{
+					SheetId:          sheet.Properties.SheetId,
+					StartRowIndex:    0,
+					StartColumnIndex: 0,
+					EndColumnIndex:   0,
+					EndRowIndex:      0,
+				},
+				Rows: rows[:len(existing)],
 			},
-			Rows: buildRows(txs, sheet.Data[0].RowData),
+		})
+		reqs = append(reqs, &gsheets.Request{
+			AppendCells: &gsheets.AppendCellsRequest{
+				SheetId: sheet.Properties.SheetId,
+				Fields:  "*",
+				Rows:    rows[len(existing):],
+			},
+		})
+		return reqs
+	}
+	return []*gsheets.Request{
+		{
+			UpdateCells: &gsheets.UpdateCellsRequest{
+				Fields: "*",
+				Range: &gsheets.GridRange{
+					SheetId:          sheet.Properties.SheetId,
+					StartRowIndex:    0,
+					StartColumnIndex: 0,
+					EndColumnIndex:   0,
+					EndRowIndex:      0,
+				},
+				Rows: rows,
+			},
 		},
 	}
 }
@@ -302,6 +340,11 @@ func balanceUpdate(accs []truelayer.AbstractAccount, balances []truelayer.Balanc
 								StringValue: strPtr("Current Balance"),
 							},
 						},
+						{
+							UserEnteredValue: &gsheets.ExtendedValue{
+								StringValue: strPtr("Provider"),
+							},
+						},
 					},
 				})
 				for i, b := range balances {
@@ -326,6 +369,11 @@ func balanceUpdate(accs []truelayer.AbstractAccount, balances []truelayer.Balanc
 							{
 								UserEnteredValue: &gsheets.ExtendedValue{
 									NumberValue: &b.Current,
+								},
+							},
+							{
+								UserEnteredValue: &gsheets.ExtendedValue{
+									StringValue: strPtr(accs[i].ProviderName()),
 								},
 							},
 						},

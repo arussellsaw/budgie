@@ -8,8 +8,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/monzo/slog"
-
 	"golang.org/x/oauth2"
 
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/token"
@@ -81,12 +79,10 @@ func (c *Client) Transactions(ctx context.Context, kind, accountID string, histo
 		var res []Transaction
 		ts := t.Add(-88 * 24 * time.Hour).Format("2006-01-02T15:04:05Z")
 		now := t.Format("2006-01-02T15:04:05Z")
-		slog.Info(ctx, "Getting txs for %s %s %s", accountID, ts, now)
 		err := c.doRequest(ctx, fmt.Sprintf("/data/v1/%s/%s/transactions?from=%s&to=%s", kind, accountID, ts, now), &res)
 		if err != nil {
 			return nil, err
 		}
-		slog.Info(ctx, "got %v transactions", len(res))
 		if len(res) == 0 {
 			break
 		}

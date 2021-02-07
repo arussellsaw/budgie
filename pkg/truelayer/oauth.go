@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"cloud.google.com/go/pubsub"
+
 	"github.com/gorilla/mux"
 	"github.com/monzo/slog"
 	"golang.org/x/oauth2"
@@ -36,7 +38,7 @@ func Init(ctx context.Context, m *mux.Router) error {
 			"offline_access",
 		},
 		Endpoint: oauth2.Endpoint{
-			AuthURL:   "https://auth.truelayer.com/?providers=uk-ob-all+uk-oauth-all",
+			AuthURL:   "https://auth.truelayer.com/?providers=uk-ob-all+uk-oauth-all+de-xs2a-all",
 			TokenURL:  "https://auth.truelayer.com/connect/token",
 			AuthStyle: oauth2.AuthStyleAutoDetect,
 		},
@@ -79,6 +81,19 @@ func oauthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	slog.Info(ctx, "Set token for user %s", oauthState.Value)
+	ps, err := pubsub.NewClient(ctx, util.Project())
+	if err != nil {
+		slog.Error(ctx, "error getting pubsub client: %s", err)
+		return
+	}
+	topic := ps.Topic("sync-users")
+	result := topic.Publish(ctx, &pubsub.Message{
+		Data: []byte(oauthState.Value),
+	})
+	_, err = result.Get(ctx)
+	if err != nil {
+		slog.Error(ctx, "error publishing: %s", err)
+	}
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 

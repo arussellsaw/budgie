@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -25,6 +26,8 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+
 	var logger slog.Logger
 
 	sloggcloud.ProjectID = util.Project()
@@ -35,9 +38,13 @@ func main() {
 		logger = logging.ColourLogger{Writer: os.Stdout}
 	}
 
-	slog.SetDefaultLogger(logger)
+	logger, err := logging.NewReportingLogger(ctx, logger)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
-	ctx := context.Background()
+	slog.SetDefaultLogger(logger)
 
 	idgen.Init(ctx)
 
