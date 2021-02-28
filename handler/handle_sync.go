@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"hash/fnv"
 	"net/http"
 	"sort"
 	"strings"
@@ -104,6 +105,9 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 	findSheet:
 		var accSheet *gsheets.Sheet
 		for _, sheet := range userSheet.Sheets {
+			if sheet.Properties.SheetId == sheetID(acc.ID()) {
+				accSheet = sheet
+			}
 			if strings.HasPrefix(sheet.Properties.Title, acc.Name()) {
 				if len(sheet.Properties.Title) > len(acc.Name()) && !strings.HasSuffix(sheet.Properties.Title, acc.ID()) {
 					continue
@@ -124,7 +128,8 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 					{
 						AddSheet: &gsheets.AddSheetRequest{
 							Properties: &gsheets.SheetProperties{
-								Title: acc.Name() + acc.ID(),
+								SheetId: sheetID(acc.ID()),
+								Title:   acc.Name(),
 								GridProperties: &gsheets.GridProperties{
 									ColumnCount: 7,
 									RowCount:    5,
@@ -383,6 +388,12 @@ func balanceUpdate(accs []truelayer.AbstractAccount, balances []truelayer.Balanc
 			}(),
 		},
 	}
+}
+
+func sheetID(id string) int64 {
+	h := fnv.New32()
+	h.Write([]byte(id))
+	return int64(h.Sum32())
 }
 
 func strPtr(s string) *string {
