@@ -85,3 +85,15 @@ func main() {
 
 	slog.Error(ctx, "server exiting: %s", srv.ListenAndServe())
 }
+
+func redirectBudgie(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Host != "budgie.fi" && util.IsProd() {
+			slog.Info(r.Context(), "redirecting %s", r.URL.Host)
+			u := *r.URL
+			u.Host = "budgie.fi"
+			http.Redirect(w, r, u.String(), http.StatusPermanentRedirect)
+		}
+		next.ServeHTTP(w, r)
+	})
+}

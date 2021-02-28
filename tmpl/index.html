@@ -1,26 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>🏦 👉 📊 You Need A Spreadsheet</title>
-    <meta name="title" content="🏦 👉 📊 You Need a Spreadsheet">
+    <title>🏦 👉 📊 Budgie</title>
+    <meta name="title" content="🏦 👉 📊 Budgie">
     <meta name="description" content="Get on top of your finances by tracking all of your bank accounts & credit cards in Google Sheets">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://youneedaspreadsheet.com">
-    <meta property="og:title" content="🏦 👉 📊 You Need a Spreadsheet">
+    <meta property="og:url" content="https://budgie.fi">
+    <meta property="og:title" content="🏦 👉 📊 Budgie">
     <meta property="og:description" content="Get on top of your finances by tracking all of your bank accounts & credit cards in Google Sheets">
     <meta property="og:image" content="/static/preview.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://youneedaspreadsheet.com">
-    <meta property="twitter:title" content="🏦 👉 📊 You Need a Spreadsheet">
+    <meta property="twitter:url" content="https://budgie.fi">
+    <meta property="twitter:image" content="https://budgie.fi/static/preview.png">
+    <meta property="twitter:title" content="🏦 👉 📊 Budgie">
     <meta property="twitter:creator" content="@arussellsaw">
     <meta property="twitter:description" content="Get on top of your finances by tracking all of your bank accounts & credit cards in Google Sheets">
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=0.86, maximum-scale=5.0, minimum-scale=0.86">
-    <script async defer data-domain="youneedaspreadsheet.com" src="https://plausible.io/js/plausible.js"></script>
+    <script async defer data-domain="budgie.fi" src="https://plausible.io/js/plausible.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
     <script>
         var stripe = Stripe({{.StripePublishableKey}});
@@ -49,10 +50,11 @@
 <body>
 <div class="max-w-screen-sm mx-auto space-y-5 mt-20 mb-20 p-4">
     <p class="text-5xl font-extrabold">Hello! 👋</p>
+    <p class="text-3xl font-bold">You Need a Spreadsheet is now Budgie 🦜</p>
     {{if not .User }}
         <p class="mb-10 text-xl font-bold">Thanks for stopping by, you can sign up and log in by clicking the link below! 👇</p>
         <p> <a class="mt-10 text-l font-bold text-blue-500" href="/api/sheets/oauth/login">Log in with Google.</a></p>
-        <p class="text-3xl font-bold">You need a spreadsheet 📊</p>
+        <p class="text-3xl font-bold">Let Budgie help you with your budget 📊</p>
         <p class="text-l font-bold">
             Get on top of your finances by tracking all of your bank accounts in Google Sheets. Having a high level view of
             your money is a budgeting superpower, you'll be able to analyse your spending & savings over the long term, and
@@ -60,7 +62,7 @@
             & balances, why not let the robots do it for you? 🤖
         </p>
         <p class="text-3xl font-bold">How much does it cost? 💸</p>
-        <p class="text-l font-bold">£2 per month, billed via <a class="text-blue-500" href="https://stripe.com">Stripe</a>.</p>
+        <p class="text-l font-bold">£4 per month, billed via <a class="text-blue-500" href="https://stripe.com">Stripe</a>.</p>
         <p class="text-l font-bold">If you'd like to connect a business account check out the <a class="text-blue-500" href="/business">business page</a>.</p>
         <p class="text-3xl font-bold">Is my bank supported? 🏦</p>
         <p class="text-l font-bold">
@@ -84,7 +86,7 @@
             • This project is open source, you can find it on <a class="text-blue-500" href="https://github.com/arussellsaw/youneedaspreadsheet">GitHub</a>.
         </p>
         <p class="text-l font-bold" id="privacy-policy">
-            • Y.N.A.S never stores or logs any of your data & the only place the data lives is in your bank, and the spreadsheet you
+            • Budgie never stores or logs any of your data & the only place the data lives is in your bank, and the spreadsheet you
             configure.
         </p>
         <p class="text-l font-bold" id="privacy-policy">
@@ -92,10 +94,10 @@
             Cloud's KMS (Key Management Service).
         </p>
         <p class="text-l font-bold" id="privacy-policy">
-            • Y.N.A.S doesn't read any of your other spreadsheets, only the one created by this app.
+            • Budgie doesn't read any of your other spreadsheets, only the one created by this app.
         </p>
         <p class="text-l font-bold" id="privacy-policy">
-            • Y.N.A.S will only use your Google email to identify your account, send receipts, and notify you if there are any issues.
+            • Budgie will only use your Google email to identify your account, send receipts, and notify you if there are any issues.
         </p>
         <p class="text-l font-bold" id="privacy-policy">
             • Your data is never shared with a third party without your direct written or verbal consent.
