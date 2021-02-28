@@ -141,7 +141,7 @@
         {{if and .HasTruelayer .HasSheets .HasStripe}}
             <p class="text-xl font-bold">We're currently syncing these accounts:</p>
             {{ range .Accounts }}
-                <p class="ml-5 text-xl font-bold">•  {{.Provider.DisplayName}}</p>
+                <p class="ml-5 text-xl font-bold">•  {{.Provider.DisplayName}}<span class="text-base font-normal"> consent expires at {{.Expiry}} <a class="text-blue-500 text-m" href="/api/truelayer/oauth/login?token_id={{.TokenID}}"> reconnect.</a></span></p>
             {{end}}
             {{if .User.SyncTime }}
                 <p class="font-bold">They were last synced at {{ .User.SyncTime }}</p>

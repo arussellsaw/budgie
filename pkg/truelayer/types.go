@@ -88,6 +88,10 @@ type Metadata struct {
 	PrivacyPolicy          string    `json:"privacy_policy"`
 }
 
+func (m Metadata) Expiry() string {
+	return m.ConsentExpiresAt.Format("2006-01-02 15:04")
+}
+
 type Provider struct {
 	DisplayName string `json:"display_name"`
 	LogoURI     string `json:"logo_uri"`
@@ -150,4 +154,15 @@ type AbstractAccount interface {
 	ProviderName() string
 	Balancer
 	Transactioner
+}
+
+type ReauthenticateRequest struct {
+	ResponseType string `json:"response_type"`
+	RefreshToken string `json:"refresh_token"`
+	RedirectURI  string `json:"redirect_uri"`
+}
+
+type ReauthenticateResponse struct {
+	Result  string `json:"result"`
+	Success bool   `json:"success"`
 }

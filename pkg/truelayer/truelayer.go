@@ -1,12 +1,18 @@
 package truelayer
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"sort"
 	"time"
+
+	"github.com/pkg/errors"
+
+	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
 
 	"golang.org/x/oauth2"
 
@@ -23,10 +29,11 @@ func GetClients(ctx context.Context, userID string) ([]*Client, error) {
 		return nil, err
 	}
 	var cs []*Client
-	for _, t := range ts {
+	for tokenID, t := range ts {
 		cs = append(cs, &Client{
-			userID: userID,
-			t:      t,
+			userID:  userID,
+			TokenID: tokenID,
+			t:       t,
 			http: &http.Client{
 				Transport: http.DefaultTransport,
 				Timeout:   300 * time.Second,
@@ -36,10 +43,31 @@ func GetClients(ctx context.Context, userID string) ([]*Client, error) {
 	return cs, nil
 }
 
+func GetClient(ctx context.Context, tokenID string) (*Client, error) {
+	t, err := token.Get(ctx, OauthConfig, tokenID)
+	if err != nil {
+		return nil, err
+	}
+	u := authn.User(ctx)
+	if u == nil {
+		return nil, fmt.Errorf("unauthorised")
+	}
+	return &Client{
+		TokenID: tokenID,
+		userID:  u.ID,
+		t:       t,
+		http: &http.Client{
+			Transport: http.DefaultTransport,
+			Timeout:   300 * time.Second,
+		},
+	}, nil
+}
+
 type Client struct {
-	userID string
-	t      *oauth2.Token
-	http   *http.Client
+	userID  string
+	TokenID string
+	t       *oauth2.Token
+	http    *http.Client
 }
 
 func (c *Client) authRequest(r *http.Request) {
@@ -161,6 +189,39 @@ func (c *Client) doRequest(ctx context.Context, path string, results interface{}
 	response.Results = results
 	err = json.NewDecoder(res.Body).Decode(&response)
 	return err
+}
+func (c *Client) doPostAuthRequest(ctx context.Context, path string, request, results interface{}) error {
+	buf, err := json.Marshal(request)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		"https://auth.truelayer.com"+path,
+		bytes.NewReader(buf),
+	)
+	if err != nil {
+		return err
+	}
+	res, err := c.http.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "sending request")
+	}
+	buf, _ = ioutil.ReadAll(res.Body)
+	fmt.Println(string(buf))
+	err = json.NewDecoder(res.Body).Decode(&results)
+	return errors.Wrap(err, "decoding json")
+}
+
+func (c *Client) ReauthenticateURL(ctx context.Context) (string, error) {
+	var res ReauthenticateResponse
+	err := c.doPostAuthRequest(ctx, "/v1/reauthuri", ReauthenticateRequest{
+		ResponseType: "code",
+		RefreshToken: c.t.RefreshToken,
+		RedirectURI:  OauthConfig.RedirectURL + "&token_id=" + c.TokenID,
+	}, &res)
+	return res.Result, err
 }
 
 func Providers(ctx context.Context) ([]Provider, error) {

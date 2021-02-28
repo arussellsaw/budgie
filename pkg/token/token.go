@@ -27,7 +27,7 @@ func Set(ctx context.Context, id, owner, kind string, config *oauth2.Config, tok
 		}
 	}
 
-	if token.RefreshToken == "" {
+	if token.RefreshToken == "" && refreshToken != "" {
 		token.RefreshToken = refreshToken
 	}
 	fs, err := store.FromContext(ctx)
@@ -112,17 +112,17 @@ func Get(ctx context.Context, config *oauth2.Config, id string) (*oauth2.Token, 
 	return token, nil
 }
 
-func ListByUser(ctx context.Context, userID, kind string, config *oauth2.Config) ([]*oauth2.Token, error) {
+func ListByUser(ctx context.Context, userID, kind string, config *oauth2.Config) (map[string]*oauth2.Token, error) {
 	fs, err := store.FromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var tokens []*oauth2.Token
+	var tokens = make(map[string]*oauth2.Token)
 	// maybe get old style token
 	t, err := Get(ctx, config, LegacyTokenID(userID, config))
 	if err == nil {
-		tokens = append(tokens, t)
+		tokens[LegacyTokenID(userID, config)] = t
 	}
 
 	docs, err := fs.Collection(collection).
@@ -163,7 +163,7 @@ func ListByUser(ctx context.Context, userID, kind string, config *oauth2.Config)
 				return nil, err
 			}
 		}
-		tokens = append(tokens, token)
+		tokens[st.ID] = token
 	}
 	return tokens, nil
 }

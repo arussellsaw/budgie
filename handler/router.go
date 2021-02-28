@@ -17,6 +17,7 @@ func Routes(r *mux.Router) {
 	r.HandleFunc("/api/debug/accounts", handleDebugAccounts)
 	r.HandleFunc("/api/debug/transactions", handleDebugTransactions)
 	r.HandleFunc("/api/debug/cards", handleDebugCards)
+	r.HandleFunc("/api/truelayer/reconnect", handleReconnect)
 
 	fs := http.FileServer(http.Dir("./static/"))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))

@@ -52,7 +52,12 @@ func oauthLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unauthorized", http.StatusForbidden)
 		return
 	}
-	oauthState := generateStateOauthCookie(w, u.ID)
+	id := idgen.New("tok")
+	if tokenID := r.URL.Query().Get("token_id"); tokenID != "" {
+		id = tokenID
+	}
+
+	oauthState := generateStateOauthCookie(w, id)
 
 	url := OauthConfig.AuthCodeURL(oauthState, oauth2.AccessTypeOffline)
 	slog.Info(r.Context(), "generating auth URL for user: %s", u.ID)
@@ -63,11 +68,17 @@ func oauthCallback(w http.ResponseWriter, r *http.Request) {
 	oauthState, _ := r.Cookie("oauthstate")
 	ctx := r.Context()
 
+	u := authn.User(r.Context())
+	if u == nil {
+		http.Error(w, "unauthorized", http.StatusForbidden)
+		return
+	}
 	if r.FormValue("state") != oauthState.Value {
 		slog.Error(ctx, "invalid oauth state: %s", oauthState.Value)
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
+	tokenID := oauthState.Value
 
 	t, err := OauthConfig.Exchange(context.Background(), r.FormValue("code"))
 	if err != nil {
@@ -75,7 +86,7 @@ func oauthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = token.Set(ctx, idgen.New("tok"), oauthState.Value, "truelayer", OauthConfig, t)
+	err = token.Set(ctx, tokenID, u.ID, "truelayer", OauthConfig, t)
 	if err != nil {
 		slog.Error(ctx, "failed to set token: %s", err)
 		return
@@ -88,7 +99,7 @@ func oauthCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	topic := ps.Topic("sync-users")
 	result := topic.Publish(ctx, &pubsub.Message{
-		Data: []byte(oauthState.Value),
+		Data: []byte(u.ID),
 	})
 	_, err = result.Get(ctx)
 	if err != nil {

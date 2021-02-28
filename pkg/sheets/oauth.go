@@ -55,6 +55,10 @@ func oauthGoogleLogin(w http.ResponseWriter, r *http.Request) {
 	oauthState := generateStateOauthCookie(w, userID)
 
 	url := OauthConfig.AuthCodeURL(oauthState, oauth2.AccessTypeOffline)
+	if r.URL.Query().Get("force") != "" {
+		url = url + "&prompt=consent"
+	}
+
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
