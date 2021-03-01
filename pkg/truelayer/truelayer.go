@@ -164,7 +164,7 @@ func (c *Client) doRequest(ctx context.Context, path string, results interface{}
 }
 
 func Providers(ctx context.Context) ([]Provider, error) {
-	res, err := http.Get("https://auth.truelayer.com/api/providers")
+	res, err := http.Get(fmt.Sprintf("https://auth.truelayer.com/api/providers?clientid=%s", OauthConfig.ClientID))
 	if err != nil {
 		return nil, err
 	}
