@@ -393,7 +393,7 @@ func balanceUpdate(accs []truelayer.AbstractAccount, balances []truelayer.Balanc
 func sheetID(id string) int64 {
 	h := fnv.New32()
 	h.Write([]byte(id))
-	return int64(h.Sum32())
+	return int64(h.Sum32() % 100000)
 }
 
 func strPtr(s string) *string {

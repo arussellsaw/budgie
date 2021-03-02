@@ -77,7 +77,7 @@ func main() {
 
 	srv := http.Server{
 		Addr:    ":8080",
-		Handler: sloggcloud.CloudContextMiddleware(authn.UserSessionMiddleware(r)),
+		Handler: redirectBudgie(sloggcloud.CloudContextMiddleware(authn.UserSessionMiddleware(r))),
 		BaseContext: func(l net.Listener) context.Context {
 			return ctx
 		},
@@ -88,7 +88,7 @@ func main() {
 
 func redirectBudgie(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Host != "budgie.fi" && util.IsProd() {
+		if r.Host == "youneedaspreadsheet.com" && util.IsProd() {
 			slog.Info(r.Context(), "redirecting %s", r.URL.Host)
 			u := *r.URL
 			u.Host = "budgie.fi"
