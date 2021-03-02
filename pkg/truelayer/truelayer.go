@@ -17,6 +17,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/arussellsaw/youneedaspreadsheet/pkg/token"
+	"github.com/monzo/slog"
 )
 
 const (
@@ -25,8 +26,10 @@ const (
 
 func GetClients(ctx context.Context, userID string) ([]*Client, error) {
 	ts, err := token.ListByUser(ctx, userID, "truelayer", OauthConfig)
-	if err != nil {
+	if err != nil && len(ts) == 0 {
 		return nil, err
+	} else if err != nil {
+		slog.Warn(ctx, "error getting tokens for user %s : %s", userID, err)
 	}
 	var cs []*Client
 	for tokenID, t := range ts {
