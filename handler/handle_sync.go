@@ -64,7 +64,10 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 	tls, err := truelayer.GetClients(ctx, u.ID)
 	if err != nil {
 		slog.Error(ctx, "Error getting truelayer client: %s", err)
-		return
+		if len(tls) == 0 {
+			slog.Error(ctx, "UNABLE TO SYNC USER, NO TRUELAYER CLIENTS %s", u.ID)
+			return
+		}
 	}
 	gs, err := sheets.NewClient(ctx, u.ID)
 	if err != nil {

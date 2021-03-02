@@ -81,7 +81,6 @@ func hasTruelayer(ctx context.Context, user *domain.User) (bool, []truelayer.Met
 	tls, err := truelayer.GetClients(ctx, user.ID)
 	if err != nil {
 		slog.Error(ctx, "error getting truelayer client: %s", err)
-		return false, nil
 	}
 	var out []truelayer.Metadata
 	for _, tl := range tls {
