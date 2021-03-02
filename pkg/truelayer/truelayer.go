@@ -225,10 +225,18 @@ func (c *Client) ReauthenticateURL(ctx context.Context) (string, error) {
 }
 
 func Providers(ctx context.Context) ([]Provider, error) {
-	res, err := http.Get("https://auth.truelayer.com/api/providers")
+	res, err := http.Get(fmt.Sprintf("https://auth.truelayer.com/api/providers?clientid=%s", OauthConfig.ClientID))
 	if err != nil {
 		return nil, err
 	}
 	var ps []Provider
-	return ps, json.NewDecoder(res.Body).Decode(&ps)
+	err = json.NewDecoder(res.Body).Decode(&ps)
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Slice(ps, func(i, j int) bool {
+		return ps[i].DisplayName < ps[j].DisplayName
+	})
+	return ps, nil
 }

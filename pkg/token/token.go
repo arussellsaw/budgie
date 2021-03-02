@@ -132,17 +132,20 @@ func ListByUser(ctx context.Context, userID, kind string, config *oauth2.Config)
 		slog.Error(ctx, "code: %s", grpc.Code(err))
 		return nil, err
 	}
+	var errs []error
 	for _, doc := range docs {
 		st := StoredToken{}
 		err = doc.DataTo(&st)
 		if err != nil {
-			return nil, errors.Wrap(err, "unmarshaling token")
+			errs = append(errs, errors.Wrap(err, "unmarshaling token"))
+			continue
 		}
 
 		t := oauth2.Token{}
 		buf, err := secret.Decrypt(ctx, st.EncryptedToken, st.KeyName)
 		if err != nil {
-			return nil, errors.Wrap(err, "decrypting token")
+			errs = append(errs, errors.Wrap(err, "decrypting token"))
+			continue
 		}
 		err = json.Unmarshal(buf, &t)
 
@@ -153,19 +156,32 @@ func ListByUser(ctx context.Context, userID, kind string, config *oauth2.Config)
 
 		token, err := src.Token()
 		if err != nil {
-			return nil, errors.Wrap(err, "getting token")
+			errs = append(errs, errors.Wrap(err, "getting/refreshing token"))
+			continue
 		}
 		// token was refreshed, let's store the new access token
 		if token.AccessToken != t.AccessToken {
 			slog.Info(ctx, "Access token was refreshed, setting new token %s", st.ID)
 			err = Set(ctx, st.ID, st.OwnerID, st.Kind, config, token)
 			if err != nil {
-				return nil, err
+				errs = append(errs, errors.Wrap(err, "storing updated token"))
+				continue
 			}
 		}
 		tokens[st.ID] = token
 	}
-	return tokens, nil
+	return tokens, joinErrors(errs...)
+}
+
+func joinErrors(errs ...error) error {
+	if len(errs) == 0 {
+		return nil
+	}
+	var out string
+	for _, err := range errs {
+		out += err.Error() + ", "
+	}
+	return errors.New(out)
 }
 
 type StoredToken struct {

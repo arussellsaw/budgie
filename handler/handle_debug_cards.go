@@ -18,8 +18,7 @@ func handleDebugCards(w http.ResponseWriter, r *http.Request) {
 
 	tls, err := truelayer.GetClients(ctx, u.ID)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
+		w.Write([]byte(err.Error()))
 	}
 	out := []truelayer.Card{}
 	for _, tl := range tls {

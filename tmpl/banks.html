@@ -26,10 +26,12 @@
 <body>
 <div class="max-w-screen-sm mx-auto mt-20 mb-20 p-4">
     {{ range .Providers }}
-        <div class="flex flex-row items-center h-20">
-            <img class="h-20 w-20 mr-5" alt="{{.DisplayName}} logo" src="{{ .LogoURL }}"/>
-        <p class="m-0 p-0 text-xl font-bold">{{ .DisplayName }}</p>
-        </div>
+        {{ if ne .ProviderID "mock" }}
+            <div class="flex flex-row items-center h-20">
+                <img class="h-20 w-20 mr-5" alt="{{.DisplayName}} logo" src="{{ .LogoURL }}"/>
+            <p class="m-0 p-0 text-xl font-bold">{{ .DisplayName }}</p>
+            </div>
+        {{ end }}
     {{ end }}
 </div>
 </body>
