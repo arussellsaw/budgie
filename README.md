@@ -5,7 +5,7 @@ Get on top of your finances by tracking all of your bank accounts in Google Shee
 
 ## How much does it cost? 💸
 
-£2 per month, billed via Stripe.
+£4 per month, billed via Stripe.
 
 If you'd like to connect a business account check out the business page.
 
