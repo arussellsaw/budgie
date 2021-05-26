@@ -20,9 +20,9 @@ import (
 	"github.com/stripe/stripe-go/v71/sub"
 	"github.com/stripe/stripe-go/v71/webhook"
 
-	"github.com/arussellsaw/youneedaspreadsheet/domain"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
+	"github.com/arussellsaw/budgie/domain"
+	"github.com/arussellsaw/budgie/pkg/authn"
+	"github.com/arussellsaw/budgie/pkg/util"
 )
 
 func Init(ctx context.Context, m *mux.Router) error {

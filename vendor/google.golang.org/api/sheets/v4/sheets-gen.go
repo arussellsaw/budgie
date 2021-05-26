@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC.
+// Copyright 2021 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -86,8 +86,8 @@ const (
 	// See, edit, create, and delete all of your Google Drive files
 	DriveScope = "https://www.googleapis.com/auth/drive"
 
-	// View and manage Google Drive files and folders that you have opened
-	// or created with this app
+	// See, edit, create, and delete only the specific Google Drive files
+	// you use with this app
 	DriveFileScope = "https://www.googleapis.com/auth/drive.file"
 
 	// See and download all your Google Drive files
@@ -1143,7 +1143,8 @@ type BaselineValueFormat struct {
 	// If positive_color is also set, this field takes precedence.
 	PositiveColorStyle *ColorStyle `json:"positiveColorStyle,omitempty"`
 
-	// TextFormat: Text formatting options for baseline value.
+	// TextFormat: Text formatting options for baseline value. The link
+	// field is not supported.
 	TextFormat *TextFormat `json:"textFormat,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ComparisonType") to
@@ -1174,7 +1175,7 @@ func (s *BaselineValueFormat) MarshalJSON() ([]byte, error) {
 // one axis per axis position.
 type BasicChartAxis struct {
 	// Format: The format of the title. Only valid if the axis is not
-	// associated with the domain.
+	// associated with the domain. The link field is not supported.
 	Format *TextFormat `json:"format,omitempty"`
 
 	// Position: The position of this axis.
@@ -1628,7 +1629,7 @@ func (s *BatchClearValuesByDataFilterResponse) MarshalJSON() ([]byte, error) {
 // BatchClearValuesRequest: The request for clearing more than one range
 // of values in a spreadsheet.
 type BatchClearValuesRequest struct {
-	// Ranges: The ranges to clear, in A1 notation.
+	// Ranges: The ranges to clear, in A1 or R1C1 notation.
 	Ranges []string `json:"ranges,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Ranges") to
@@ -1703,8 +1704,7 @@ type BatchGetValuesByDataFilterRequest struct {
 
 	// DateTimeRenderOption: How dates, times, and durations should be
 	// represented in the output. This is ignored if value_render_option is
-	// FORMATTED_VALUE. The default dateTime render option is
-	// [DateTimeRenderOption.SERIAL_NUMBER].
+	// FORMATTED_VALUE. The default dateTime render option is SERIAL_NUMBER.
 	//
 	// Possible values:
 	//   "SERIAL_NUMBER" - Instructs date, time, datetime, and duration
@@ -1734,7 +1734,7 @@ type BatchGetValuesByDataFilterRequest struct {
 	MajorDimension string `json:"majorDimension,omitempty"`
 
 	// ValueRenderOption: How values should be represented in the output.
-	// The default render option is ValueRenderOption.FORMATTED_VALUE.
+	// The default render option is FORMATTED_VALUE.
 	//
 	// Possible values:
 	//   "FORMATTED_VALUE" - Values will be calculated & formatted in the
@@ -1906,7 +1906,7 @@ type BatchUpdateSpreadsheetResponse struct {
 
 	// UpdatedSpreadsheet: The spreadsheet after updates were applied. This
 	// is only set if
-	// [BatchUpdateSpreadsheetRequest.include_spreadsheet_in_response] is
+	// BatchUpdateSpreadsheetRequest.include_spreadsheet_in_response is
 	// `true`.
 	UpdatedSpreadsheet *Spreadsheet `json:"updatedSpreadsheet,omitempty"`
 
@@ -1957,7 +1957,7 @@ type BatchUpdateValuesByDataFilterRequest struct {
 	// ResponseDateTimeRenderOption: Determines how dates, times, and
 	// durations in the response should be rendered. This is ignored if
 	// response_value_render_option is FORMATTED_VALUE. The default dateTime
-	// render option is DateTimeRenderOption.SERIAL_NUMBER.
+	// render option is SERIAL_NUMBER.
 	//
 	// Possible values:
 	//   "SERIAL_NUMBER" - Instructs date, time, datetime, and duration
@@ -1975,8 +1975,7 @@ type BatchUpdateValuesByDataFilterRequest struct {
 	ResponseDateTimeRenderOption string `json:"responseDateTimeRenderOption,omitempty"`
 
 	// ResponseValueRenderOption: Determines how values in the response
-	// should be rendered. The default render option is
-	// ValueRenderOption.FORMATTED_VALUE.
+	// should be rendered. The default render option is FORMATTED_VALUE.
 	//
 	// Possible values:
 	//   "FORMATTED_VALUE" - Values will be calculated & formatted in the
@@ -2097,7 +2096,7 @@ type BatchUpdateValuesRequest struct {
 	// ResponseDateTimeRenderOption: Determines how dates, times, and
 	// durations in the response should be rendered. This is ignored if
 	// response_value_render_option is FORMATTED_VALUE. The default dateTime
-	// render option is DateTimeRenderOption.SERIAL_NUMBER.
+	// render option is SERIAL_NUMBER.
 	//
 	// Possible values:
 	//   "SERIAL_NUMBER" - Instructs date, time, datetime, and duration
@@ -2115,8 +2114,7 @@ type BatchUpdateValuesRequest struct {
 	ResponseDateTimeRenderOption string `json:"responseDateTimeRenderOption,omitempty"`
 
 	// ResponseValueRenderOption: Determines how values in the response
-	// should be rendered. The default render option is
-	// ValueRenderOption.FORMATTED_VALUE.
+	// should be rendered. The default render option is FORMATTED_VALUE.
 	//
 	// Possible values:
 	//   "FORMATTED_VALUE" - Values will be calculated & formatted in the
@@ -2285,9 +2283,9 @@ func (s *BigQueryQuerySpec) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// BigQueryTableSpec: Specifies a BigQuery table definition. Only
-// [native tables](https://cloud.google.com/bigquery/docs/tables-intro)
-// is allowed.
+// BigQueryTableSpec: Specifies a BigQuery table definition. Only native
+// tables (https://cloud.google.com/bigquery/docs/tables-intro) is
+// allowed.
 type BigQueryTableSpec struct {
 	// DatasetId: The BigQuery dataset id.
 	DatasetId string `json:"datasetId,omitempty"`
@@ -2619,14 +2617,14 @@ type BubbleChartSpec struct {
 	// fully transparent and 1 is fully opaque.
 	BubbleOpacity float64 `json:"bubbleOpacity,omitempty"`
 
-	// BubbleSizes: The data contianing the bubble sizes. Bubble sizes are
+	// BubbleSizes: The data containing the bubble sizes. Bubble sizes are
 	// used to draw the bubbles at different sizes relative to each other.
 	// If specified, group_ids must also be specified. This field is
 	// optional.
 	BubbleSizes *ChartData `json:"bubbleSizes,omitempty"`
 
 	// BubbleTextStyle: The format of the text inside the bubbles.
-	// Strikethrough and underline are not supported.
+	// Strikethrough, underline, and link are not supported.
 	BubbleTextStyle *TextFormat `json:"bubbleTextStyle,omitempty"`
 
 	// Domain: The data containing the bubble x-values. These values locate
@@ -2653,7 +2651,7 @@ type BubbleChartSpec struct {
 	//   "INSIDE_LEGEND" - The legend is rendered inside the chart area.
 	LegendPosition string `json:"legendPosition,omitempty"`
 
-	// Series: The data contianing the bubble y-values. These values locate
+	// Series: The data containing the bubble y-values. These values locate
 	// the bubbles in the chart vertically.
 	Series *ChartData `json:"series,omitempty"`
 
@@ -2839,7 +2837,7 @@ func (s *CandlestickSeries) MarshalJSON() ([]byte, error) {
 type CellData struct {
 	// DataSourceFormula: Output only. Information about a data source
 	// formula on the cell. The field is set if user_entered_value is a
-	// formula referencing some DATA_SOURCE sheet, e.g
+	// formula referencing some DATA_SOURCE sheet, e.g.
 	// `=SUM(DataSheet!Column)`.
 	DataSourceFormula *DataSourceFormula `json:"dataSourceFormula,omitempty"`
 
@@ -2874,7 +2872,10 @@ type CellData struct {
 	// Hyperlink: A hyperlink this cell points to, if any. If the cell
 	// contains multiple hyperlinks, this field will be empty. This field is
 	// read-only. To set it, use a `=HYPERLINK` formula in the
-	// userEnteredValue.formulaValue field.
+	// userEnteredValue.formulaValue field. A cell-level link can also be
+	// set from the userEnteredFormat.textFormat field. Alternatively, set a
+	// hyperlink in the textFormatRun.format.link field that spans the
+	// entire cell.
 	Hyperlink string `json:"hyperlink,omitempty"`
 
 	// Note: Any note on the cell.
@@ -2983,7 +2984,9 @@ type CellFormat struct {
 	TextDirection string `json:"textDirection,omitempty"`
 
 	// TextFormat: The format of the text in the cell (unless overridden by
-	// a format run).
+	// a format run). Setting a cell-level link will clear the cell's
+	// existing links. Setting a link in a format run will clear the
+	// cell-level link.
 	TextFormat *TextFormat `json:"textFormat,omitempty"`
 
 	// TextRotation: The rotation applied to text in a cell
@@ -3007,10 +3010,10 @@ type CellFormat struct {
 	//   "WRAP_STRATEGY_UNSPECIFIED" - The default value, do not use.
 	//   "OVERFLOW_CELL" - Lines that are longer than the cell width will be
 	// written in the next cell over, so long as that cell is empty. If the
-	// next cell over is non-empty, this behaves the same as CLIP. The text
-	// will never wrap to the next line unless the user manually inserts a
-	// new line. Example: | First sentence. | | Manual newline that is very
-	// long. <- Text continues into next cell | Next newline. |
+	// next cell over is non-empty, this behaves the same as `CLIP`. The
+	// text will never wrap to the next line unless the user manually
+	// inserts a new line. Example: | First sentence. | | Manual newline
+	// that is very long. <- Text continues into next cell | Next newline. |
 	//   "LEGACY_WRAP" - This wrap strategy represents the old Google Sheets
 	// wrap strategy where words that are longer than a line are clipped
 	// rather than broken. This strategy is not supported on all platforms
@@ -3152,7 +3155,7 @@ func (s *ChartCustomNumberFormatOptions) MarshalJSON() ([]byte, error) {
 // ChartData: The data included in a domain or series.
 type ChartData struct {
 	// AggregateType: The aggregation type for the series of a data source
-	// chart. Not supported for regular charts.
+	// chart. Only supported for data source charts.
 	//
 	// Possible values:
 	//   "CHART_AGGREGATE_TYPE_UNSPECIFIED" - Default value, do not use.
@@ -3169,7 +3172,7 @@ type ChartData struct {
 	ColumnReference *DataSourceColumnReference `json:"columnReference,omitempty"`
 
 	// GroupRule: The rule to group the data by if the ChartData backs the
-	// domain of a data source chart. Not supported for regular charts.
+	// domain of a data source chart. Only supported for data source charts.
 	GroupRule *ChartGroupRule `json:"groupRule,omitempty"`
 
 	// SourceRange: The source ranges of the data.
@@ -3465,8 +3468,8 @@ type ChartSpec struct {
 	// Subtitle: The subtitle of the chart.
 	Subtitle string `json:"subtitle,omitempty"`
 
-	// SubtitleTextFormat: The subtitle text format. Strikethrough and
-	// underline are not supported.
+	// SubtitleTextFormat: The subtitle text format. Strikethrough,
+	// underline, and link are not supported.
 	SubtitleTextFormat *TextFormat `json:"subtitleTextFormat,omitempty"`
 
 	// SubtitleTextPosition: The subtitle text position. This field is
@@ -3476,8 +3479,8 @@ type ChartSpec struct {
 	// Title: The title of the chart.
 	Title string `json:"title,omitempty"`
 
-	// TitleTextFormat: The title text format. Strikethrough and underline
-	// are not supported.
+	// TitleTextFormat: The title text format. Strikethrough, underline, and
+	// link are not supported.
 	TitleTextFormat *TextFormat `json:"titleTextFormat,omitempty"`
 
 	// TitleTextPosition: The title text position. This field is optional.
@@ -3587,19 +3590,19 @@ func (s *ClearValuesResponse) MarshalJSON() ([]byte, error) {
 
 // Color: Represents a color in the RGBA color space. This
 // representation is designed for simplicity of conversion to/from color
-// representations in various languages over compactness; for example,
+// representations in various languages over compactness. For example,
 // the fields of this representation can be trivially provided to the
-// constructor of "java.awt.Color" in Java; it can also be trivially
-// provided to UIColor's "+colorWithRed:green:blue:alpha" method in iOS;
+// constructor of `java.awt.Color` in Java; it can also be trivially
+// provided to UIColor's `+colorWithRed:green:blue:alpha` method in iOS;
 // and, with just a little work, it can be easily formatted into a CSS
-// "rgba()" string in JavaScript, as well. Note: this proto does not
-// carry information about the absolute color space that should be used
-// to interpret the RGB value (e.g. sRGB, Adobe RGB, DCI-P3, BT.2020,
-// etc.). By default, applications SHOULD assume the sRGB color space.
-// Note: when color equality needs to be decided, implementations,
-// unless documented otherwise, will treat two colors to be equal if all
-// their red, green, blue and alpha values each differ by at most 1e-5.
-// Example (Java): import com.google.type.Color; // ... public static
+// `rgba()` string in JavaScript. This reference page doesn't carry
+// information about the absolute color space that should be used to
+// interpret the RGB value (e.g. sRGB, Adobe RGB, DCI-P3, BT.2020,
+// etc.). By default, applications should assume the sRGB color space.
+// When color equality needs to be decided, implementations, unless
+// documented otherwise, treat two colors as equal if all their red,
+// green, blue, and alpha values each differ by at most 1e-5. Example
+// (Java): import com.google.type.Color; // ... public static
 // java.awt.Color fromProto(Color protocolor) { float alpha =
 // protocolor.hasAlpha() ? protocolor.getAlpha().getValue() : 1.0;
 // return new java.awt.Color( protocolor.getRed(),
@@ -3628,27 +3631,27 @@ func (s *ClearValuesResponse) MarshalJSON() ([]byte, error) {
 // || 0.0; var greenFrac = rgb_color.green || 0.0; var blueFrac =
 // rgb_color.blue || 0.0; var red = Math.floor(redFrac * 255); var green
 // = Math.floor(greenFrac * 255); var blue = Math.floor(blueFrac * 255);
-// if (!('alpha' in rgb_color)) { return rgbToCssColor_(red, green,
+// if (!('alpha' in rgb_color)) { return rgbToCssColor(red, green,
 // blue); } var alphaFrac = rgb_color.alpha.value || 0.0; var rgbParams
 // = [red, green, blue].join(','); return ['rgba(', rgbParams, ',',
-// alphaFrac, ')'].join(''); }; var rgbToCssColor_ = function(red,
-// green, blue) { var rgbNumber = new Number((red << 16) | (green << 8)
-// | blue); var hexString = rgbNumber.toString(16); var missingZeros = 6
-// - hexString.length; var resultBuilder = ['#']; for (var i = 0; i <
+// alphaFrac, ')'].join(''); }; var rgbToCssColor = function(red, green,
+// blue) { var rgbNumber = new Number((red << 16) | (green << 8) |
+// blue); var hexString = rgbNumber.toString(16); var missingZeros = 6 -
+// hexString.length; var resultBuilder = ['#']; for (var i = 0; i <
 // missingZeros; i++) { resultBuilder.push('0'); }
 // resultBuilder.push(hexString); return resultBuilder.join(''); }; //
 // ...
 type Color struct {
 	// Alpha: The fraction of this color that should be applied to the
 	// pixel. That is, the final pixel color is defined by the equation:
-	// pixel color = alpha * (this color) + (1.0 - alpha) * (background
-	// color) This means that a value of 1.0 corresponds to a solid color,
+	// `pixel color = alpha * (this color) + (1.0 - alpha) * (background
+	// color)` This means that a value of 1.0 corresponds to a solid color,
 	// whereas a value of 0.0 corresponds to a completely transparent color.
 	// This uses a wrapper message rather than a simple float scalar so that
 	// it is possible to distinguish between a default value and the value
-	// being unset. If omitted, this color object is to be rendered as a
-	// solid color (as if the alpha value had been explicitly given with a
-	// value of 1.0).
+	// being unset. If omitted, this color object is rendered as a solid
+	// color (as if the alpha value had been explicitly given a value of
+	// 1.0).
 	Alpha float64 `json:"alpha,omitempty"`
 
 	// Blue: The amount of blue in the color as a value in the interval [0,
@@ -3856,7 +3859,7 @@ type CopyPasteRequest struct {
 	//   "PASTE_VALUES" - Paste the values ONLY without formats, formulas,
 	// or merges.
 	//   "PASTE_FORMAT" - Paste the format and data validation only.
-	//   "PASTE_NO_BORDERS" - Like PASTE_NORMAL but without borders.
+	//   "PASTE_NO_BORDERS" - Like `PASTE_NORMAL` but without borders.
 	//   "PASTE_FORMULA" - Paste the formulas only.
 	//   "PASTE_DATA_VALIDATION" - Paste the data validation only.
 	//   "PASTE_CONDITIONAL_FORMATTING" - Paste the conditional formatting
@@ -3994,7 +3997,7 @@ type CutPasteRequest struct {
 	//   "PASTE_VALUES" - Paste the values ONLY without formats, formulas,
 	// or merges.
 	//   "PASTE_FORMAT" - Paste the format and data validation only.
-	//   "PASTE_NO_BORDERS" - Like PASTE_NORMAL but without borders.
+	//   "PASTE_NO_BORDERS" - Like `PASTE_NORMAL` but without borders.
 	//   "PASTE_FORMULA" - Paste the formulas only.
 	//   "PASTE_DATA_VALIDATION" - Paste the data validation only.
 	//   "PASTE_CONDITIONAL_FORMATTING" - Paste the conditional formatting
@@ -4230,7 +4233,8 @@ type DataLabel struct {
 	//   "OUTSIDE_END" - Outside a bar or column at the end.
 	Placement string `json:"placement,omitempty"`
 
-	// TextFormat: The text format used for the data label.
+	// TextFormat: The text format used for the data label. The link field
+	// is not supported.
 	TextFormat *TextFormat `json:"textFormat,omitempty"`
 
 	// Type: The type of the data label.
@@ -4518,9 +4522,8 @@ func (s *DataSourceObjectReferences) MarshalJSON() ([]byte, error) {
 // a query.
 type DataSourceParameter struct {
 	// Name: Named parameter. Must be a legitimate identifier for the
-	// DataSource that supports it. For example, [BigQuery
-	// identifier](https://cloud.google.com/bigquery/docs/reference/standard-
-	// sql/lexical#identifiers).
+	// DataSource that supports it. For example, BigQuery identifier
+	// (https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#identifiers).
 	Name string `json:"name,omitempty"`
 
 	// NamedRangeId: ID of a NamedRange. Its size must be 1x1.
@@ -5497,8 +5500,7 @@ func (s *DeleteRangeRequest) MarshalJSON() ([]byte, error) {
 // DeleteSheetRequest: Deletes the requested sheet.
 type DeleteSheetRequest struct {
 	// SheetId: The ID of the sheet to delete. If the sheet is of
-	// SheetType.DATA_SOURCE type, the associated DataSource is also
-	// deleted.
+	// DATA_SOURCE type, the associated DataSource is also deleted.
 	SheetId int64 `json:"sheetId,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "SheetId") to
@@ -6224,7 +6226,7 @@ type ExtendedValue struct {
 	FormulaValue *string `json:"formulaValue,omitempty"`
 
 	// NumberValue: Represents a double value. Note: Dates, Times and
-	// DateTimes are represented as doubles in "serial number" format.
+	// DateTimes are represented as doubles in SERIAL_NUMBER format.
 	NumberValue *float64 `json:"numberValue,omitempty"`
 
 	// StringValue: Represents a string value. Leading single quotes are not
@@ -6444,8 +6446,12 @@ type FindReplaceRequest struct {
 
 	// SearchByRegex: True if the find value is a regex. The regular
 	// expression and replacement should follow Java regex rules at
-	// https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html. The replacement string is allowed to refer to capturing groups. For example, if one cell has the contents "Google Sheets" and another has "Google Docs", then searching for "o.* (.*)" with a replacement of "$1 Rocks" would change the contents of the cells to "GSheets Rocks" and "GDocs Rocks"
-	// respectively.
+	// https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html.
+	// The replacement string is allowed to refer to capturing groups. For
+	// example, if one cell has the contents "Google Sheets" and another
+	// has "Google Docs", then searching for "o.* (.*)" with a
+	// replacement of "$1 Rocks" would change the contents of the cells to
+	// "GSheets Rocks" and "GDocs Rocks" respectively.
 	SearchByRegex bool `json:"searchByRegex,omitempty"`
 
 	// SheetId: The sheet to find/replace over.
@@ -7078,12 +7084,12 @@ type InterpolationPoint struct {
 	// InterpolationPoint.value.
 	//   "PERCENT" - The interpolation point is the given percentage over
 	// all the cells in the range of the conditional format. This is
-	// equivalent to NUMBER if the value was: `=(MAX(FLATTEN(range)) *
+	// equivalent to `NUMBER` if the value was: `=(MAX(FLATTEN(range)) *
 	// (value / 100)) + (MIN(FLATTEN(range)) * (1 - (value / 100)))` (where
 	// errors in the range are ignored when flattening).
 	//   "PERCENTILE" - The interpolation point is the given percentile over
 	// all the cells in the range of the conditional format. This is
-	// equivalent to NUMBER if the value was: `=PERCENTILE(FLATTEN(range),
+	// equivalent to `NUMBER` if the value was: `=PERCENTILE(FLATTEN(range),
 	// value / 100)` (where errors in the range are ignored when
 	// flattening).
 	Type string `json:"type,omitempty"`
@@ -7211,7 +7217,8 @@ type KeyValueFormat struct {
 	// used.
 	Position *TextPosition `json:"position,omitempty"`
 
-	// TextFormat: Text formatting options for key value.
+	// TextFormat: Text formatting options for key value. The link field is
+	// not supported.
 	TextFormat *TextFormat `json:"textFormat,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Position") to
@@ -7280,6 +7287,34 @@ type LineStyle struct {
 
 func (s *LineStyle) MarshalJSON() ([]byte, error) {
 	type NoMethod LineStyle
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Link: An external or local reference.
+type Link struct {
+	// Uri: The link identifier.
+	Uri string `json:"uri,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Uri") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Uri") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Link) MarshalJSON() ([]byte, error) {
+	type NoMethod Link
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -7543,9 +7578,9 @@ func (s *NamedRange) MarshalJSON() ([]byte, error) {
 type NumberFormat struct {
 	// Pattern: Pattern string used for formatting. If not set, a default
 	// pattern based on the user's locale will be used if necessary for the
-	// given type. See the [Date and Number Formats
-	// guide](/sheets/api/guides/formats) for more information about the
-	// supported patterns.
+	// given type. See the Date and Number Formats guide
+	// (/sheets/api/guides/formats) for more information about the supported
+	// patterns.
 	Pattern string `json:"pattern,omitempty"`
 
 	// Type: The type of the number format. When writing, this field must be
@@ -7761,7 +7796,7 @@ type PasteDataRequest struct {
 	//   "PASTE_VALUES" - Paste the values ONLY without formats, formulas,
 	// or merges.
 	//   "PASTE_FORMAT" - Paste the format and data validation only.
-	//   "PASTE_NO_BORDERS" - Like PASTE_NORMAL but without borders.
+	//   "PASTE_NO_BORDERS" - Like `PASTE_NORMAL` but without borders.
 	//   "PASTE_FORMULA" - Paste the formulas only.
 	//   "PASTE_DATA_VALIDATION" - Paste the data validation only.
 	//   "PASTE_CONDITIONAL_FORMATTING" - Paste the conditional formatting
@@ -7973,7 +8008,7 @@ type PivotGroup struct {
 
 	// RepeatHeadings: True if the headings in this pivot group should be
 	// repeated. This is only valid for row groupings and is ignored by
-	// columns. By default, we minimize repitition of headings by not
+	// columns. By default, we minimize repetition of headings by not
 	// showing higher level headings where they are the same. For example,
 	// even though the third row below corresponds to "Q1 Mar", "Q1" is not
 	// shown because it is redundant with previous rows. Setting
@@ -9458,7 +9493,8 @@ type SlicerSpec struct {
 	//   "RIGHT" - The text is explicitly aligned to the right of the cell.
 	HorizontalAlignment string `json:"horizontalAlignment,omitempty"`
 
-	// TextFormat: The text format of title in the slicer.
+	// TextFormat: The text format of title in the slicer. The link field is
+	// not supported.
 	TextFormat *TextFormat `json:"textFormat,omitempty"`
 
 	// Title: The title of the slicer.
@@ -9803,6 +9839,13 @@ type TextFormat struct {
 
 	// Italic: True if the text is italicized.
 	Italic bool `json:"italic,omitempty"`
+
+	// Link: The link destination of the text, if any. Setting a link in a
+	// format run will clear an existing cell-level link. When a link is
+	// set, the text foreground color will be set to the default link color
+	// and the text will be underlined. If these fields are modified in the
+	// same request, those values will be used instead of the link defaults.
+	Link *Link `json:"link,omitempty"`
 
 	// Strikethrough: True if the text has a strikethrough.
 	Strikethrough bool `json:"strikethrough,omitempty"`
@@ -10210,7 +10253,8 @@ type TreemapChartSpec struct {
 	// colors as well.
 	SizeData *ChartData `json:"sizeData,omitempty"`
 
-	// TextFormat: The text format for all labels on the chart.
+	// TextFormat: The text format for all labels on the chart. The link
+	// field is not supported.
 	TextFormat *TextFormat `json:"textFormat,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ColorData") to
@@ -11549,6 +11593,8 @@ type SpreadsheetsBatchUpdateCall struct {
 // Your changes may be altered with respect to collaborator changes. If
 // there are no collaborators, the spreadsheet should reflect your
 // changes.
+//
+// - spreadsheetId: The spreadsheet to apply the updates to.
 func (r *SpreadsheetsService) BatchUpdate(spreadsheetId string, batchupdatespreadsheetrequest *BatchUpdateSpreadsheetRequest) *SpreadsheetsBatchUpdateCall {
 	c := &SpreadsheetsBatchUpdateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -11583,7 +11629,7 @@ func (c *SpreadsheetsBatchUpdateCall) Header() http.Header {
 
 func (c *SpreadsheetsBatchUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11723,7 +11769,7 @@ func (c *SpreadsheetsCreateCall) Header() http.Header {
 
 func (c *SpreadsheetsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11829,6 +11875,8 @@ type SpreadsheetsGetCall struct {
 // specified. Limiting the range will return only the portions of the
 // spreadsheet that intersect the requested ranges. Ranges are specified
 // using A1 notation.
+//
+// - spreadsheetId: The spreadsheet to request.
 func (r *SpreadsheetsService) Get(spreadsheetId string) *SpreadsheetsGetCall {
 	c := &SpreadsheetsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -11887,7 +11935,7 @@ func (c *SpreadsheetsGetCall) Header() http.Header {
 
 func (c *SpreadsheetsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12014,6 +12062,8 @@ type SpreadsheetsGetByDataFilterCall struct {
 // a field mask is set, the `includeGridData` parameter is ignored For
 // large spreadsheets, it is recommended to retrieve only the specific
 // fields of the spreadsheet that you want.
+//
+// - spreadsheetId: The spreadsheet to request.
 func (r *SpreadsheetsService) GetByDataFilter(spreadsheetId string, getspreadsheetbydatafilterrequest *GetSpreadsheetByDataFilterRequest) *SpreadsheetsGetByDataFilterCall {
 	c := &SpreadsheetsGetByDataFilterCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -12048,7 +12098,7 @@ func (c *SpreadsheetsGetByDataFilterCall) Header() http.Header {
 
 func (c *SpreadsheetsGetByDataFilterCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12158,6 +12208,9 @@ type SpreadsheetsDeveloperMetadataGetCall struct {
 // Get: Returns the developer metadata with the specified ID. The caller
 // must specify the spreadsheet ID and the developer metadata's unique
 // metadataId.
+//
+// - metadataId: The ID of the developer metadata to retrieve.
+// - spreadsheetId: The ID of the spreadsheet to retrieve metadata from.
 func (r *SpreadsheetsDeveloperMetadataService) Get(spreadsheetId string, metadataId int64) *SpreadsheetsDeveloperMetadataGetCall {
 	c := &SpreadsheetsDeveloperMetadataGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -12202,7 +12255,7 @@ func (c *SpreadsheetsDeveloperMetadataGetCall) Header() http.Header {
 
 func (c *SpreadsheetsDeveloperMetadataGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12319,6 +12372,8 @@ type SpreadsheetsDeveloperMetadataSearchCall struct {
 // represents a location in a spreadsheet, this will return all
 // developer metadata associated with locations intersecting that
 // region.
+//
+// - spreadsheetId: The ID of the spreadsheet to retrieve metadata from.
 func (r *SpreadsheetsDeveloperMetadataService) Search(spreadsheetId string, searchdevelopermetadatarequest *SearchDeveloperMetadataRequest) *SpreadsheetsDeveloperMetadataSearchCall {
 	c := &SpreadsheetsDeveloperMetadataSearchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -12353,7 +12408,7 @@ func (c *SpreadsheetsDeveloperMetadataSearchCall) Header() http.Header {
 
 func (c *SpreadsheetsDeveloperMetadataSearchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12462,6 +12517,10 @@ type SpreadsheetsSheetsCopyToCall struct {
 
 // CopyTo: Copies a single sheet from a spreadsheet to another
 // spreadsheet. Returns the properties of the newly created sheet.
+//
+// - sheetId: The ID of the sheet to copy.
+// - spreadsheetId: The ID of the spreadsheet containing the sheet to
+//   copy.
 func (r *SpreadsheetsSheetsService) CopyTo(spreadsheetId string, sheetId int64, copysheettoanotherspreadsheetrequest *CopySheetToAnotherSpreadsheetRequest) *SpreadsheetsSheetsCopyToCall {
 	c := &SpreadsheetsSheetsCopyToCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -12497,7 +12556,7 @@ func (c *SpreadsheetsSheetsCopyToCall) Header() http.Header {
 
 func (c *SpreadsheetsSheetsCopyToCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12616,14 +12675,18 @@ type SpreadsheetsValuesAppendCall struct {
 // Append: Appends values to a spreadsheet. The input range is used to
 // search for existing data and find a "table" within that range. Values
 // will be appended to the next row of the table, starting with the
-// first column of the table. See the
-// [guide](/sheets/api/guides/values#appending_values) and [sample
-// code](/sheets/api/samples/writing#append_values) for specific details
-// of how tables are detected and data is appended. The caller must
-// specify the spreadsheet ID, range, and a valueInputOption. The
+// first column of the table. See the guide
+// (/sheets/api/guides/values#appending_values) and sample code
+// (/sheets/api/samples/writing#append_values) for specific details of
+// how tables are detected and data is appended. The caller must specify
+// the spreadsheet ID, range, and a valueInputOption. The
 // `valueInputOption` only controls how the input data will be added to
 // the sheet (column-wise or row-wise), it does not influence what cell
 // the data starts being written to.
+//
+// - range: The A1 notation of a range to search for a logical table of
+//   data. Values are appended after the last row of the table.
+// - spreadsheetId: The ID of the spreadsheet to update.
 func (r *SpreadsheetsValuesService) Append(spreadsheetId string, range_ string, valuerange *ValueRange) *SpreadsheetsValuesAppendCall {
 	c := &SpreadsheetsValuesAppendCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -12658,7 +12721,7 @@ func (c *SpreadsheetsValuesAppendCall) InsertDataOption(insertDataOption string)
 // "responseDateTimeRenderOption": Determines how dates, times, and
 // durations in the response should be rendered. This is ignored if
 // response_value_render_option is FORMATTED_VALUE. The default dateTime
-// render option is [DateTimeRenderOption.SERIAL_NUMBER].
+// render option is SERIAL_NUMBER.
 //
 // Possible values:
 //   "SERIAL_NUMBER" - Instructs date, time, datetime, and duration
@@ -12680,8 +12743,7 @@ func (c *SpreadsheetsValuesAppendCall) ResponseDateTimeRenderOption(responseDate
 
 // ResponseValueRenderOption sets the optional parameter
 // "responseValueRenderOption": Determines how values in the response
-// should be rendered. The default render option is
-// ValueRenderOption.FORMATTED_VALUE.
+// should be rendered. The default render option is FORMATTED_VALUE.
 //
 // Possible values:
 //   "FORMATTED_VALUE" - Values will be calculated & formatted in the
@@ -12744,7 +12806,7 @@ func (c *SpreadsheetsValuesAppendCall) Header() http.Header {
 
 func (c *SpreadsheetsValuesAppendCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12843,7 +12905,7 @@ func (c *SpreadsheetsValuesAppendCall) Do(opts ...googleapi.CallOption) (*Append
 	//       "type": "string"
 	//     },
 	//     "responseDateTimeRenderOption": {
-	//       "description": "Determines how dates, times, and durations in the response should be rendered. This is ignored if response_value_render_option is FORMATTED_VALUE. The default dateTime render option is [DateTimeRenderOption.SERIAL_NUMBER].",
+	//       "description": "Determines how dates, times, and durations in the response should be rendered. This is ignored if response_value_render_option is FORMATTED_VALUE. The default dateTime render option is SERIAL_NUMBER.",
 	//       "enum": [
 	//         "SERIAL_NUMBER",
 	//         "FORMATTED_STRING"
@@ -12856,7 +12918,7 @@ func (c *SpreadsheetsValuesAppendCall) Do(opts ...googleapi.CallOption) (*Append
 	//       "type": "string"
 	//     },
 	//     "responseValueRenderOption": {
-	//       "description": "Determines how values in the response should be rendered. The default render option is ValueRenderOption.FORMATTED_VALUE.",
+	//       "description": "Determines how values in the response should be rendered. The default render option is FORMATTED_VALUE.",
 	//       "enum": [
 	//         "FORMATTED_VALUE",
 	//         "UNFORMATTED_VALUE",
@@ -12923,6 +12985,8 @@ type SpreadsheetsValuesBatchClearCall struct {
 // The caller must specify the spreadsheet ID and one or more ranges.
 // Only values are cleared -- all other properties of the cell (such as
 // formatting, data validation, etc..) are kept.
+//
+// - spreadsheetId: The ID of the spreadsheet to update.
 func (r *SpreadsheetsValuesService) BatchClear(spreadsheetId string, batchclearvaluesrequest *BatchClearValuesRequest) *SpreadsheetsValuesBatchClearCall {
 	c := &SpreadsheetsValuesBatchClearCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -12957,7 +13021,7 @@ func (c *SpreadsheetsValuesBatchClearCall) Header() http.Header {
 
 func (c *SpreadsheetsValuesBatchClearCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -13068,6 +13132,8 @@ type SpreadsheetsValuesBatchClearByDataFilterCall struct {
 // more DataFilters. Ranges matching any of the specified data filters
 // will be cleared. Only values are cleared -- all other properties of
 // the cell (such as formatting, data validation, etc..) are kept.
+//
+// - spreadsheetId: The ID of the spreadsheet to update.
 func (r *SpreadsheetsValuesService) BatchClearByDataFilter(spreadsheetId string, batchclearvaluesbydatafilterrequest *BatchClearValuesByDataFilterRequest) *SpreadsheetsValuesBatchClearByDataFilterCall {
 	c := &SpreadsheetsValuesBatchClearByDataFilterCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -13102,7 +13168,7 @@ func (c *SpreadsheetsValuesBatchClearByDataFilterCall) Header() http.Header {
 
 func (c *SpreadsheetsValuesBatchClearByDataFilterCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -13211,6 +13277,8 @@ type SpreadsheetsValuesBatchGetCall struct {
 
 // BatchGet: Returns one or more ranges of values from a spreadsheet.
 // The caller must specify the spreadsheet ID and one or more ranges.
+//
+// - spreadsheetId: The ID of the spreadsheet to retrieve data from.
 func (r *SpreadsheetsValuesService) BatchGet(spreadsheetId string) *SpreadsheetsValuesBatchGetCall {
 	c := &SpreadsheetsValuesBatchGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -13220,8 +13288,7 @@ func (r *SpreadsheetsValuesService) BatchGet(spreadsheetId string) *Spreadsheets
 // DateTimeRenderOption sets the optional parameter
 // "dateTimeRenderOption": How dates, times, and durations should be
 // represented in the output. This is ignored if value_render_option is
-// FORMATTED_VALUE. The default dateTime render option is
-// [DateTimeRenderOption.SERIAL_NUMBER].
+// FORMATTED_VALUE. The default dateTime render option is SERIAL_NUMBER.
 //
 // Possible values:
 //   "SERIAL_NUMBER" - Instructs date, time, datetime, and duration
@@ -13257,8 +13324,8 @@ func (c *SpreadsheetsValuesBatchGetCall) MajorDimension(majorDimension string) *
 	return c
 }
 
-// Ranges sets the optional parameter "ranges": The A1 notation of the
-// values to retrieve.
+// Ranges sets the optional parameter "ranges": The A1 notation or R1C1
+// notation of the range to retrieve values from.
 func (c *SpreadsheetsValuesBatchGetCall) Ranges(ranges ...string) *SpreadsheetsValuesBatchGetCall {
 	c.urlParams_.SetMulti("ranges", append([]string{}, ranges...))
 	return c
@@ -13322,7 +13389,7 @@ func (c *SpreadsheetsValuesBatchGetCall) Header() http.Header {
 
 func (c *SpreadsheetsValuesBatchGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -13393,7 +13460,7 @@ func (c *SpreadsheetsValuesBatchGetCall) Do(opts ...googleapi.CallOption) (*Batc
 	//   ],
 	//   "parameters": {
 	//     "dateTimeRenderOption": {
-	//       "description": "How dates, times, and durations should be represented in the output. This is ignored if value_render_option is FORMATTED_VALUE. The default dateTime render option is [DateTimeRenderOption.SERIAL_NUMBER].",
+	//       "description": "How dates, times, and durations should be represented in the output. This is ignored if value_render_option is FORMATTED_VALUE. The default dateTime render option is SERIAL_NUMBER.",
 	//       "enum": [
 	//         "SERIAL_NUMBER",
 	//         "FORMATTED_STRING"
@@ -13421,7 +13488,7 @@ func (c *SpreadsheetsValuesBatchGetCall) Do(opts ...googleapi.CallOption) (*Batc
 	//       "type": "string"
 	//     },
 	//     "ranges": {
-	//       "description": "The A1 notation of the values to retrieve.",
+	//       "description": "The A1 notation or R1C1 notation of the range to retrieve values from.",
 	//       "location": "query",
 	//       "repeated": true,
 	//       "type": "string"
@@ -13478,6 +13545,8 @@ type SpreadsheetsValuesBatchGetByDataFilterCall struct {
 // the specified data filters. The caller must specify the spreadsheet
 // ID and one or more DataFilters. Ranges that match any of the data
 // filters in the request will be returned.
+//
+// - spreadsheetId: The ID of the spreadsheet to retrieve data from.
 func (r *SpreadsheetsValuesService) BatchGetByDataFilter(spreadsheetId string, batchgetvaluesbydatafilterrequest *BatchGetValuesByDataFilterRequest) *SpreadsheetsValuesBatchGetByDataFilterCall {
 	c := &SpreadsheetsValuesBatchGetByDataFilterCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -13512,7 +13581,7 @@ func (c *SpreadsheetsValuesBatchGetByDataFilterCall) Header() http.Header {
 
 func (c *SpreadsheetsValuesBatchGetByDataFilterCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -13622,6 +13691,8 @@ type SpreadsheetsValuesBatchUpdateCall struct {
 // BatchUpdate: Sets values in one or more ranges of a spreadsheet. The
 // caller must specify the spreadsheet ID, a valueInputOption, and one
 // or more ValueRanges.
+//
+// - spreadsheetId: The ID of the spreadsheet to update.
 func (r *SpreadsheetsValuesService) BatchUpdate(spreadsheetId string, batchupdatevaluesrequest *BatchUpdateValuesRequest) *SpreadsheetsValuesBatchUpdateCall {
 	c := &SpreadsheetsValuesBatchUpdateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -13656,7 +13727,7 @@ func (c *SpreadsheetsValuesBatchUpdateCall) Header() http.Header {
 
 func (c *SpreadsheetsValuesBatchUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -13765,6 +13836,8 @@ type SpreadsheetsValuesBatchUpdateByDataFilterCall struct {
 // BatchUpdateByDataFilter: Sets values in one or more ranges of a
 // spreadsheet. The caller must specify the spreadsheet ID, a
 // valueInputOption, and one or more DataFilterValueRanges.
+//
+// - spreadsheetId: The ID of the spreadsheet to update.
 func (r *SpreadsheetsValuesService) BatchUpdateByDataFilter(spreadsheetId string, batchupdatevaluesbydatafilterrequest *BatchUpdateValuesByDataFilterRequest) *SpreadsheetsValuesBatchUpdateByDataFilterCall {
 	c := &SpreadsheetsValuesBatchUpdateByDataFilterCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -13799,7 +13872,7 @@ func (c *SpreadsheetsValuesBatchUpdateByDataFilterCall) Header() http.Header {
 
 func (c *SpreadsheetsValuesBatchUpdateByDataFilterCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -13911,6 +13984,9 @@ type SpreadsheetsValuesClearCall struct {
 // spreadsheet ID and range. Only values are cleared -- all other
 // properties of the cell (such as formatting, data validation, etc..)
 // are kept.
+//
+// - range: The A1 notation or R1C1 notation of the values to clear.
+// - spreadsheetId: The ID of the spreadsheet to update.
 func (r *SpreadsheetsValuesService) Clear(spreadsheetId string, range_ string, clearvaluesrequest *ClearValuesRequest) *SpreadsheetsValuesClearCall {
 	c := &SpreadsheetsValuesClearCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -13946,7 +14022,7 @@ func (c *SpreadsheetsValuesClearCall) Header() http.Header {
 
 func (c *SpreadsheetsValuesClearCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -14021,7 +14097,7 @@ func (c *SpreadsheetsValuesClearCall) Do(opts ...googleapi.CallOption) (*ClearVa
 	//   ],
 	//   "parameters": {
 	//     "range": {
-	//       "description": "The A1 notation of the values to clear.",
+	//       "description": "The A1 notation or R1C1 notation of the values to clear.",
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"
@@ -14063,6 +14139,10 @@ type SpreadsheetsValuesGetCall struct {
 
 // Get: Returns a range of values from a spreadsheet. The caller must
 // specify the spreadsheet ID and a range.
+//
+// - range: The A1 notation or R1C1 notation of the range to retrieve
+//   values from.
+// - spreadsheetId: The ID of the spreadsheet to retrieve data from.
 func (r *SpreadsheetsValuesService) Get(spreadsheetId string, range_ string) *SpreadsheetsValuesGetCall {
 	c := &SpreadsheetsValuesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -14073,8 +14153,7 @@ func (r *SpreadsheetsValuesService) Get(spreadsheetId string, range_ string) *Sp
 // DateTimeRenderOption sets the optional parameter
 // "dateTimeRenderOption": How dates, times, and durations should be
 // represented in the output. This is ignored if value_render_option is
-// FORMATTED_VALUE. The default dateTime render option is
-// [DateTimeRenderOption.SERIAL_NUMBER].
+// FORMATTED_VALUE. The default dateTime render option is SERIAL_NUMBER.
 //
 // Possible values:
 //   "SERIAL_NUMBER" - Instructs date, time, datetime, and duration
@@ -14112,7 +14191,7 @@ func (c *SpreadsheetsValuesGetCall) MajorDimension(majorDimension string) *Sprea
 
 // ValueRenderOption sets the optional parameter "valueRenderOption":
 // How values should be represented in the output. The default render
-// option is ValueRenderOption.FORMATTED_VALUE.
+// option is FORMATTED_VALUE.
 //
 // Possible values:
 //   "FORMATTED_VALUE" - Values will be calculated & formatted in the
@@ -14168,7 +14247,7 @@ func (c *SpreadsheetsValuesGetCall) Header() http.Header {
 
 func (c *SpreadsheetsValuesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -14241,7 +14320,7 @@ func (c *SpreadsheetsValuesGetCall) Do(opts ...googleapi.CallOption) (*ValueRang
 	//   ],
 	//   "parameters": {
 	//     "dateTimeRenderOption": {
-	//       "description": "How dates, times, and durations should be represented in the output. This is ignored if value_render_option is FORMATTED_VALUE. The default dateTime render option is [DateTimeRenderOption.SERIAL_NUMBER].",
+	//       "description": "How dates, times, and durations should be represented in the output. This is ignored if value_render_option is FORMATTED_VALUE. The default dateTime render option is SERIAL_NUMBER.",
 	//       "enum": [
 	//         "SERIAL_NUMBER",
 	//         "FORMATTED_STRING"
@@ -14269,7 +14348,7 @@ func (c *SpreadsheetsValuesGetCall) Do(opts ...googleapi.CallOption) (*ValueRang
 	//       "type": "string"
 	//     },
 	//     "range": {
-	//       "description": "The A1 notation of the values to retrieve.",
+	//       "description": "The A1 notation or R1C1 notation of the range to retrieve values from.",
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"
@@ -14281,7 +14360,7 @@ func (c *SpreadsheetsValuesGetCall) Do(opts ...googleapi.CallOption) (*ValueRang
 	//       "type": "string"
 	//     },
 	//     "valueRenderOption": {
-	//       "description": "How values should be represented in the output. The default render option is ValueRenderOption.FORMATTED_VALUE.",
+	//       "description": "How values should be represented in the output. The default render option is FORMATTED_VALUE.",
 	//       "enum": [
 	//         "FORMATTED_VALUE",
 	//         "UNFORMATTED_VALUE",
@@ -14325,6 +14404,9 @@ type SpreadsheetsValuesUpdateCall struct {
 
 // Update: Sets values in a range of a spreadsheet. The caller must
 // specify the spreadsheet ID, range, and a valueInputOption.
+//
+// - range: The A1 notation of the values to update.
+// - spreadsheetId: The ID of the spreadsheet to update.
 func (r *SpreadsheetsValuesService) Update(spreadsheetId string, range_ string, valuerange *ValueRange) *SpreadsheetsValuesUpdateCall {
 	c := &SpreadsheetsValuesUpdateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.spreadsheetId = spreadsheetId
@@ -14349,7 +14431,7 @@ func (c *SpreadsheetsValuesUpdateCall) IncludeValuesInResponse(includeValuesInRe
 // "responseDateTimeRenderOption": Determines how dates, times, and
 // durations in the response should be rendered. This is ignored if
 // response_value_render_option is FORMATTED_VALUE. The default dateTime
-// render option is DateTimeRenderOption.SERIAL_NUMBER.
+// render option is SERIAL_NUMBER.
 //
 // Possible values:
 //   "SERIAL_NUMBER" - Instructs date, time, datetime, and duration
@@ -14371,8 +14453,7 @@ func (c *SpreadsheetsValuesUpdateCall) ResponseDateTimeRenderOption(responseDate
 
 // ResponseValueRenderOption sets the optional parameter
 // "responseValueRenderOption": Determines how values in the response
-// should be rendered. The default render option is
-// ValueRenderOption.FORMATTED_VALUE.
+// should be rendered. The default render option is FORMATTED_VALUE.
 //
 // Possible values:
 //   "FORMATTED_VALUE" - Values will be calculated & formatted in the
@@ -14435,7 +14516,7 @@ func (c *SpreadsheetsValuesUpdateCall) Header() http.Header {
 
 func (c *SpreadsheetsValuesUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20201124")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20210518")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -14521,7 +14602,7 @@ func (c *SpreadsheetsValuesUpdateCall) Do(opts ...googleapi.CallOption) (*Update
 	//       "type": "string"
 	//     },
 	//     "responseDateTimeRenderOption": {
-	//       "description": "Determines how dates, times, and durations in the response should be rendered. This is ignored if response_value_render_option is FORMATTED_VALUE. The default dateTime render option is DateTimeRenderOption.SERIAL_NUMBER.",
+	//       "description": "Determines how dates, times, and durations in the response should be rendered. This is ignored if response_value_render_option is FORMATTED_VALUE. The default dateTime render option is SERIAL_NUMBER.",
 	//       "enum": [
 	//         "SERIAL_NUMBER",
 	//         "FORMATTED_STRING"
@@ -14534,7 +14615,7 @@ func (c *SpreadsheetsValuesUpdateCall) Do(opts ...googleapi.CallOption) (*Update
 	//       "type": "string"
 	//     },
 	//     "responseValueRenderOption": {
-	//       "description": "Determines how values in the response should be rendered. The default render option is ValueRenderOption.FORMATTED_VALUE.",
+	//       "description": "Determines how values in the response should be rendered. The default render option is FORMATTED_VALUE.",
 	//       "enum": [
 	//         "FORMATTED_VALUE",
 	//         "UNFORMATTED_VALUE",

@@ -10,14 +10,12 @@ import (
 	"sort"
 	"time"
 
+	"github.com/monzo/slog"
 	"github.com/pkg/errors"
-
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
-
 	"golang.org/x/oauth2"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/token"
-	"github.com/monzo/slog"
+	"github.com/arussellsaw/budgie/pkg/authn"
+	"github.com/arussellsaw/budgie/pkg/token"
 )
 
 const (
@@ -39,7 +37,7 @@ func GetClients(ctx context.Context, userID string) ([]*Client, error) {
 			t:       t,
 			http: &http.Client{
 				Transport: http.DefaultTransport,
-				Timeout:   300 * time.Second,
+				Timeout:   600 * time.Second,
 			},
 		})
 	}
@@ -104,11 +102,15 @@ func (c *Client) Accounts(ctx context.Context) ([]Account, error) {
 }
 
 func (c *Client) Transactions(ctx context.Context, kind, accountID string, historic bool) ([]Transaction, error) {
-	t := time.Now()
+	t := time.Now().UTC()
+	var days time.Duration = 88
+	if historic {
+		days = 160
+	}
 	txs := make(map[string]Transaction)
 	for {
 		var res []Transaction
-		ts := t.Add(-88 * 24 * time.Hour).Format("2006-01-02T15:04:05Z")
+		ts := t.Add(-days * 24 * time.Hour).Format("2006-01-02T15:04:05Z")
 		now := t.Format("2006-01-02T15:04:05Z")
 		err := c.doRequest(ctx, fmt.Sprintf("/data/v1/%s/%s/transactions?from=%s&to=%s", kind, accountID, ts, now), &res)
 		if err != nil {
@@ -123,7 +125,8 @@ func (c *Client) Transactions(ctx context.Context, kind, accountID string, histo
 		if !historic {
 			break
 		}
-		t = t.AddDate(0, 0, -87)
+		t = t.AddDate(0, 0, int(-(days - 1)))
+		slog.Info(ctx, "historic backfill, extending window: %s, sleeping 2s", t)
 	}
 	var out []Transaction
 	for _, tx := range txs {
@@ -187,10 +190,18 @@ func (c *Client) doRequest(ctx context.Context, path string, results interface{}
 		return err
 	}
 	response := struct {
-		Results interface{} `json:"results"`
+		Results          interface{} `json:"results"`
+		Error            string      `json:"error"`
+		ErrorDescription string      `json:"error_description"`
 	}{}
 	response.Results = results
 	err = json.NewDecoder(res.Body).Decode(&response)
+	if err != nil {
+		return err
+	}
+	if response.Error != "" {
+		return fmt.Errorf("%s: %s", response.Error, response.ErrorDescription)
+	}
 	return err
 }
 func (c *Client) doPostAuthRequest(ctx context.Context, path string, request, results interface{}) error {

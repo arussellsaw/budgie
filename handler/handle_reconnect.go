@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/truelayer"
+	"github.com/arussellsaw/budgie/pkg/truelayer"
 )
 
 func handleReconnect(w http.ResponseWriter, r *http.Request) {

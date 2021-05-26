@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/truelayer"
+	"github.com/arussellsaw/budgie/pkg/authn"
+	"github.com/arussellsaw/budgie/pkg/truelayer"
 )
 
 func handleDebugTransactions(w http.ResponseWriter, r *http.Request) {

@@ -25,7 +25,7 @@ type Response struct {
 // Encode serialises the passed object as JSON into the body (and sets appropriate headers).
 func (r *Response) Encode(v interface{}) {
 	if r.Response == nil {
-		r.Response = newHTTPResponse(Request{})
+		r.Response = newHTTPResponse(Request{}, http.StatusOK)
 	}
 
 	// If we were given an io.ReadCloser or an io.Reader (that is not also a json.Marshaler), use it directly
@@ -48,9 +48,23 @@ func (r *Response) Encode(v interface{}) {
 	r.Header.Set("Content-Type", "application/json")
 }
 
+// WrapDownstreamErrors is a context key that can be used to enable
+// wrapping of downstream response errors on a per-request basis.
+//
+// This is implemented as a context key to allow us to migrate individual
+// services from the old behaviour to the new behaviour without adding a
+// dependency on config to Typhon.
+type WrapDownstreamErrors struct{}
+
 // Decode de-serialises the JSON body into the passed object.
 func (r *Response) Decode(v interface{}) error {
 	if r.Error != nil {
+		if r.Request != nil && r.Request.Context != nil {
+			if s, ok := r.Request.Context.Value(WrapDownstreamErrors{}).(string); ok && s != "" {
+				return terrors.NewInternalWithCause(r.Error, "Downstream request error", nil, "downstream")
+			}
+		}
+
 		return r.Error
 	}
 	err := error(nil)
@@ -73,7 +87,7 @@ func (r *Response) Decode(v interface{}) error {
 // Write writes the passed bytes to the response's body.
 func (r *Response) Write(b []byte) (n int, err error) {
 	if r.Response == nil {
-		r.Response = newHTTPResponse(Request{})
+		r.Response = newHTTPResponse(Request{}, http.StatusOK)
 	}
 	switch rc := r.Body.(type) {
 	// In the "regular" case, the response body will be a bufCloser; we can write
@@ -164,9 +178,9 @@ func (r Response) String() string {
 	return b.String()
 }
 
-func newHTTPResponse(req Request) *http.Response {
+func newHTTPResponse(req Request, statusCode int) *http.Response {
 	return &http.Response{
-		StatusCode:    http.StatusOK, // Seems like a reasonable default
+		StatusCode:    statusCode,
 		Proto:         req.Proto,
 		ProtoMajor:    req.ProtoMajor,
 		ProtoMinor:    req.ProtoMinor,
@@ -175,10 +189,15 @@ func newHTTPResponse(req Request) *http.Response {
 		Body:          &bufCloser{}}
 }
 
-// NewResponse constructs a Response
+// NewResponse constructs a Response with status code 200.
 func NewResponse(req Request) Response {
+	return NewResponseWithCode(req, http.StatusOK)
+}
+
+// NewResponseWithCode constructs a Response with the given status code.
+func NewResponseWithCode(req Request, statusCode int) Response {
 	return Response{
 		Request:  &req,
 		Error:    nil,
-		Response: newHTTPResponse(req)}
+		Response: newHTTPResponse(req, statusCode)}
 }

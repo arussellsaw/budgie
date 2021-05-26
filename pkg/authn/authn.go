@@ -9,7 +9,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/monzo/slog"
 
-	"github.com/arussellsaw/youneedaspreadsheet/domain"
+	"github.com/arussellsaw/budgie/domain"
 )
 
 type sessionKey string

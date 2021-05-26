@@ -12,10 +12,10 @@ import (
 	"github.com/monzo/slog"
 	"golang.org/x/oauth2"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/idgen"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/token"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
+	"github.com/arussellsaw/budgie/pkg/authn"
+	"github.com/arussellsaw/budgie/pkg/idgen"
+	"github.com/arussellsaw/budgie/pkg/token"
+	"github.com/arussellsaw/budgie/pkg/util"
 )
 
 var (
@@ -99,7 +99,7 @@ func oauthCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	topic := ps.Topic("sync-users")
 	result := topic.Publish(ctx, &pubsub.Message{
-		Data: []byte(u.ID),
+		Data: []byte(u.ID + "|true"),
 	})
 	_, err = result.Get(ctx)
 	if err != nil {

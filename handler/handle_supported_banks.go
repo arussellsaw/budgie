@@ -4,7 +4,7 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/truelayer"
+	"github.com/arussellsaw/budgie/pkg/truelayer"
 
 	"github.com/monzo/slog"
 )

@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/monzo/terrors"
 )
@@ -146,9 +147,19 @@ func (r Request) SendVia(svc Service) *ResponseFuture {
 	return SendVia(r, svc)
 }
 
-// Response construct a new Response to the request, and if non-nil, encodes the given body into it.
+// Response constructs a new Response to the request, and if non-nil, encodes the given body into it.
 func (r Request) Response(body interface{}) Response {
 	rsp := NewResponse(r)
+	if body != nil {
+		rsp.Encode(body)
+	}
+	return rsp
+}
+
+// ResponseWithCode constructs a new Response with the given status code to the request, and if non-nil, encodes the
+// given body into it.
+func (r Request) ResponseWithCode(body interface{}, statusCode int) Response {
+	rsp := NewResponseWithCode(r, statusCode)
 	if body != nil {
 		rsp.Encode(body)
 	}
@@ -175,6 +186,12 @@ func NewRequest(ctx context.Context, method, url string, body interface{}) Reque
 		httpReq.ContentLength = 0
 		httpReq.Body = &bufCloser{}
 		req.Request = *httpReq
+
+		// Attach any metadata in the context to the request as headers.
+		meta := MetadataFromContext(ctx)
+		for k, v := range meta {
+			req.Header[strings.ToLower(k)] = v
+		}
 	}
 	if body != nil && err == nil {
 		req.Encode(body)

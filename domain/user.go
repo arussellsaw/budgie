@@ -4,16 +4,23 @@ import (
 	"context"
 	"time"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/store"
+	"github.com/arussellsaw/budgie/pkg/store"
 )
 
 type User struct {
-	ID       string     `json:"id"`
-	Email    string     `json:"email"`
-	Created  time.Time  `json:"created"`
-	SheetID  string     `json:"sheet_id"`
-	LastSync time.Time  `json:"last_sync"`
-	Stripe   StripeData `json:"stripe"`
+	ID         string                `json:"id"`
+	Email      string                `json:"email"`
+	Created    time.Time             `json:"created"`
+	SheetID    string                `json:"sheet_id"`
+	LastSync   time.Time             `json:"last_sync"`
+	SyncStatus map[string]SyncStatus `json:"sync_status"`
+	Stripe     StripeData            `json:"stripe"`
+}
+
+type SyncStatus struct {
+	Timestamp time.Time `json:"timestamp"`
+	Status    string    `json:"status"`
+	Errors    []string  `json:"error"`
 }
 
 type StripeData struct {

@@ -5,9 +5,9 @@ import (
 
 	"github.com/monzo/slog"
 
-	"github.com/arussellsaw/youneedaspreadsheet/domain"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/sheets"
+	"github.com/arussellsaw/budgie/domain"
+	"github.com/arussellsaw/budgie/pkg/authn"
+	"github.com/arussellsaw/budgie/pkg/sheets"
 )
 
 func handleCreateSheet(w http.ResponseWriter, r *http.Request) {

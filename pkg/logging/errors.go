@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
+	"github.com/arussellsaw/budgie/pkg/authn"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
+	"github.com/arussellsaw/budgie/pkg/util"
 
 	"cloud.google.com/go/errorreporting"
 	"github.com/monzo/slog"
@@ -16,7 +16,7 @@ var _ slog.Logger = &ReportingLogger{}
 
 func NewReportingLogger(ctx context.Context, logger slog.Logger) (slog.Logger, error) {
 	client, err := errorreporting.NewClient(ctx, util.Project(), errorreporting.Config{
-		ServiceName: "youneedaspreadsheet",
+		ServiceName: "budgie",
 		OnError: func(err error) {
 			slog.Warn(ctx, "error reporting error: %s", err)
 		},

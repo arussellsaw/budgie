@@ -13,4 +13,4 @@ push:
 
 just-deploy:
 	gcloud config set project youneedaspreadsheet
-	gcloud beta run deploy banksheets --image gcr.io/youneedaspreadsheet/app:latest
+	gcloud beta run deploy youneedaspreadsheet --image gcr.io/youneedaspreadsheet/app:latest

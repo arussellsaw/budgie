@@ -5,20 +5,25 @@ import (
 	"hash/fnv"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/logging"
-
 	"cloud.google.com/go/pubsub"
 	"github.com/monzo/slog"
+	"golang.org/x/time/rate"
 	gsheets "google.golang.org/api/sheets/v4"
 
-	"github.com/arussellsaw/youneedaspreadsheet/domain"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/sheets"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/stripe"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/truelayer"
+	"github.com/arussellsaw/budgie/domain"
+	"github.com/arussellsaw/budgie/pkg/authn"
+	"github.com/arussellsaw/budgie/pkg/logging"
+	"github.com/arussellsaw/budgie/pkg/sheets"
+	"github.com/arussellsaw/budgie/pkg/stripe"
+	"github.com/arussellsaw/budgie/pkg/truelayer"
+)
+
+var (
+	limiter = rate.NewLimiter(rate.Every(30*time.Second), 1)
 )
 
 type pubSubMessage struct {
@@ -28,9 +33,11 @@ type pubSubMessage struct {
 
 func handleSync(w http.ResponseWriter, r *http.Request) {
 	var (
-		ctx = r.Context()
-		u   = authn.User(ctx)
-		err error
+		ctx      = r.Context()
+		u        = authn.User(ctx)
+		err      error
+		errs     []error
+		historic bool
 	)
 	if u == nil {
 		m := pubSubMessage{}
@@ -39,7 +46,12 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 			slog.Error(ctx, "error decoding: %s", err)
 			return
 		}
-		userID := string(m.Message.Data)
+		data := string(m.Message.Data)
+		parts := strings.Split(data, "|")
+		userID := parts[0]
+		if len(parts) == 2 {
+			historic, _ = strconv.ParseBool(parts[1])
+		}
 		u, err = domain.UserByID(ctx, userID)
 		if err != nil {
 			slog.Error(ctx, "error getting user: %s", err)
@@ -48,7 +60,25 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx = logging.WithParams(ctx, map[string]string{"user_id": u.ID})
 
+	if !limiter.Allow() && r.Method == http.MethodPost {
+		slog.Warn(ctx, "rate limit exceeded, backing off: %s", u.ID)
+		http.Error(w, "rate limit exceeded", 429)
+		return
+	}
+
+	defer func() {
+		if len(errs) == 0 {
+			slog.Info(ctx, "user %s sync complete", u.ID)
+		} else {
+			slog.Warn(ctx, "user %s sync complete, with warnings: %s", u.ID, errs)
+		}
+	}()
+
 	slog.Info(ctx, "sync user: %s", u.ID)
+	if time.Since(u.LastSync) < 5*time.Minute {
+		slog.Info(ctx, "skipping user %s, last synced at %s", u.ID, u.LastSync)
+		return
+	}
 
 	if u.SheetID == "" {
 		slog.Error(ctx, "No sheet ID for user %s", u.ID)
@@ -63,7 +93,7 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 	}
 	tls, err := truelayer.GetClients(ctx, u.ID)
 	if err != nil {
-		slog.Error(ctx, "Error getting truelayer client: %s", err)
+		slog.Warn(ctx, "Error getting truelayer client: %s", err)
 		if len(tls) == 0 {
 			slog.Error(ctx, "UNABLE TO SYNC USER, NO TRUELAYER CLIENTS %s", u.ID)
 			return
@@ -76,22 +106,24 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 	}
 	var accs []truelayer.AbstractAccount
 	for _, tl := range tls {
-		as, err := tl.Accounts(ctx)
-		if err != nil {
-			slog.Error(ctx, "Error getting accounts: %s", err)
-			return
+		as, aerr := tl.Accounts(ctx)
+		if aerr != nil {
+			slog.Warn(ctx, "Error getting accounts: %s", aerr)
 		}
 		for _, a := range as {
 			a := a
 			accs = append(accs, a)
 		}
-		cs, err := tl.Cards(ctx)
-		if err != nil {
-			slog.Error(ctx, "Error getting cards: %s", err)
+		cs, cerr := tl.Cards(ctx)
+		if cerr != nil {
+			slog.Warn(ctx, "Error getting cards: %s", cerr)
 		}
 		for _, c := range cs {
 			c := c
 			accs = append(accs, c)
+		}
+		if len(cs) == 0 && len(as) == 0 {
+			errs = append(errs, aerr, cerr)
 		}
 	}
 	userSheet, err := gs.Get(ctx, u.SheetID)
@@ -104,6 +136,18 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 		balanceSheet *gsheets.Sheet
 	)
 	for _, acc := range accs {
+		select {
+		case <-ctx.Done():
+			slog.Error(ctx, "context timeout")
+			return
+		default:
+		}
+		ctx := logging.WithParams(ctx, map[string]string{
+			"token_id":   acc.TokenID(),
+			"account_id": acc.ID(),
+			"user_id":    u.ID,
+		})
+		slog.Info(ctx, "syncing account %s", acc.ID())
 		attempted := false
 	findSheet:
 		var accSheet *gsheets.Sheet
@@ -154,37 +198,44 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 			attempted = true
 			goto findSheet
 		}
-		txs, err := acc.Transactions(ctx, true)
+		txs, err := acc.Transactions(ctx, historic)
 		if err != nil {
-			slog.Error(ctx, "Error getting transactions: %s", err)
-			return
+			slog.Warn(ctx, "Error getting transactions: %s", err)
+			errs = append(errs, err)
+			continue
 		}
+		slog.Debug(ctx, "got %v transactions", len(txs))
 		sort.Slice(txs, func(i, j int) bool {
 			return txs[i].Timestamp < txs[j].Timestamp
 		})
 		update := buildUpdate(txs, accSheet)
 		if update == nil {
+			slog.Info(ctx, "skipping empty update for account %s", acc.ID())
 			continue
 		}
+		slog.Info(ctx, "successfully synced account %s", acc.ID())
 		reqs = append(reqs, update...)
 
-	}
-	u.LastSync = time.Now()
-	err = domain.UpdateUser(ctx, u)
-	if err != nil {
-		slog.Error(ctx, "Error updating last sync time: %s", err)
 	}
 
 	var balances []truelayer.Balance
 	for _, acc := range accs {
+		ctx := logging.WithParams(ctx, map[string]string{
+			"token_id":   acc.TokenID(),
+			"account_id": acc.ID(),
+			"user_id":    u.ID,
+		})
 		b, err := acc.Balance(ctx)
 		if err != nil {
-			slog.Error(ctx, "error getting balance: %s", err)
-			return
+			slog.Warn(ctx, "error getting balance: %s", err)
+			errs = append(errs, err)
+			continue
 		}
 		balances = append(balances, *b)
 	}
-	reqs = append(reqs, balanceUpdate(accs, balances, balanceSheet))
+	if len(balances) != 0 && balanceSheet != nil {
+		reqs = append(reqs, balanceUpdate(accs, balances, balanceSheet))
+	}
 
 	_, err = gs.Service(ctx).Spreadsheets.BatchUpdate(u.SheetID, &gsheets.BatchUpdateSpreadsheetRequest{
 		Requests: reqs,
@@ -193,6 +244,13 @@ func handleSync(w http.ResponseWriter, r *http.Request) {
 		slog.Error(ctx, "Error updating sheet %s : %s", u.ID, err)
 		return
 	}
+
+	u.LastSync = time.Now().UTC()
+	err = domain.UpdateUser(ctx, u)
+	if err != nil {
+		slog.Warn(ctx, "Error updating last sync time: %s", err)
+	}
+
 	if r.Method == http.MethodGet {
 		http.Redirect(w, r, "/", 302)
 	}

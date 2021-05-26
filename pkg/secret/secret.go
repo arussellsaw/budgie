@@ -7,7 +7,8 @@ import (
 
 	kms "cloud.google.com/go/kms/apiv1"
 	secretmanager "cloud.google.com/go/secretmanager/apiv1beta1"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
+
+	"github.com/arussellsaw/budgie/pkg/util"
 
 	kmspb "google.golang.org/genproto/googleapis/cloud/kms/v1"
 	secrets "google.golang.org/genproto/googleapis/cloud/secretmanager/v1beta1"

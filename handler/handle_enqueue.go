@@ -3,16 +3,16 @@ package handler
 import (
 	"net/http"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/stripe"
+	"github.com/arussellsaw/budgie/pkg/authn"
+	"github.com/arussellsaw/budgie/pkg/stripe"
 
 	"cloud.google.com/go/pubsub"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
+	"github.com/arussellsaw/budgie/pkg/util"
 
 	"github.com/monzo/slog"
 
-	"github.com/arussellsaw/youneedaspreadsheet/domain"
+	"github.com/arussellsaw/budgie/domain"
 )
 
 func handleEnqueue(w http.ResponseWriter, r *http.Request) {

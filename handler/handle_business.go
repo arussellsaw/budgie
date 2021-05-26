@@ -7,7 +7,7 @@ import (
 
 	"github.com/monzo/slog"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
+	"github.com/arussellsaw/budgie/pkg/authn"
 )
 
 func handleBusiness(w http.ResponseWriter, r *http.Request) {

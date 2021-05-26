@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/stripe"
+	"github.com/arussellsaw/budgie/pkg/authn"
+	"github.com/arussellsaw/budgie/pkg/stripe"
 
 	sloggcloud "github.com/arussellsaw/slog-gcloud"
 
@@ -16,13 +16,13 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/arussellsaw/youneedaspreadsheet/handler"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/idgen"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/logging"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/sheets"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/store"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/truelayer"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/util"
+	"github.com/arussellsaw/budgie/handler"
+	"github.com/arussellsaw/budgie/pkg/idgen"
+	"github.com/arussellsaw/budgie/pkg/logging"
+	"github.com/arussellsaw/budgie/pkg/sheets"
+	"github.com/arussellsaw/budgie/pkg/store"
+	"github.com/arussellsaw/budgie/pkg/truelayer"
+	"github.com/arussellsaw/budgie/pkg/util"
 )
 
 func main() {
@@ -89,7 +89,6 @@ func main() {
 func redirectBudgie(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Host == "youneedaspreadsheet.com" && util.IsProd() {
-			slog.Info(r.Context(), "redirecting %s", r.URL.Host)
 			u := *r.URL
 			u.Host = "budgie.fi"
 			http.Redirect(w, r, u.String(), http.StatusPermanentRedirect)

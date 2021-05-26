@@ -5,14 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/arussellsaw/budgie/pkg/authn"
+
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 
 	"github.com/monzo/slog"
 	"google.golang.org/grpc"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/secret"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/store"
+	"github.com/arussellsaw/budgie/pkg/secret"
+	"github.com/arussellsaw/budgie/pkg/store"
 )
 
 const collection = "banksheets#tokens"
@@ -171,6 +173,30 @@ func ListByUser(ctx context.Context, userID, kind string, config *oauth2.Config)
 		tokens[st.ID] = token
 	}
 	return tokens, joinErrors(errs...)
+}
+
+func Delete(ctx context.Context, tokenID string) error {
+	fs, err := store.FromContext(ctx)
+	if err != nil {
+		return err
+	}
+	user := authn.User(ctx)
+	if user == nil {
+		return fmt.Errorf("unauthorised")
+	}
+	doc, err := fs.Collection(collection).Doc(tokenID).Get(ctx)
+	if err != nil {
+		return err
+	}
+	st := StoredToken{}
+	if err := doc.DataTo(&st); err != nil {
+		return err
+	}
+	if st.OwnerID != user.ID {
+		return fmt.Errorf("unauthorized")
+	}
+	_, err = fs.Collection(collection).Doc(tokenID).Delete(ctx)
+	return err
 }
 
 func joinErrors(errs ...error) error {

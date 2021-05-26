@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>🏦 👉 📊 Delete token?</title>
+    <meta name="title" content="🏦 👉 📊 You Need a Spreadsheet">
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=0.86, maximum-scale=5.0, minimum-scale=0.86">
+    <meta charset="UTF-8">
+</head>
+<body>
+<div class="max-w-screen-sm mx-auto mt-20 mb-20 p-4">
+    <p class="text-xl font-weight-bold">{{.Message}}</p>
+    <form method="POST" action="/delete-token">
+        <input type="hidden" id="token_id" name="token_id" value="{{.TokenID}}">
+        <input type="hidden" id="confirm" name="confirm" value="true">
+        <input type="submit"/>
+    </form>
+</div>
+</body>
+</html>

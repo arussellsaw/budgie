@@ -83,7 +83,7 @@
         </p>
         <p class="text-3xl font-bold">Why should i trust you? 🕵️‍♀️</p>
         <p class="text-l font-bold" id="privacy-policy">
-            • This project is open source, you can find it on <a class="text-blue-500" href="https://github.com/arussellsaw/youneedaspreadsheet">GitHub</a>.
+            • This project is open source, you can find it on <a class="text-blue-500" href="https://github.com/arussellsaw/budgie">GitHub</a>.
         </p>
         <p class="text-l font-bold" id="privacy-policy">
             • Budgie never stores or logs any of your data & the only place the data lives is in your bank, and the spreadsheet you
@@ -104,7 +104,7 @@
         </p>
         <p class="text-l font-bold" id="privacy-policy">
             If you have any questions please feel free to email me at <a class="text-blue-500" href="mailto:arussellsaw@hey.com">arussellsaw@hey.com</a>
-            or <a class="text-blue-500" href="https://github.com/arussellsaw/youneedaspreadsheet/issues/new">raise an issue on GitHub.</a>
+            or <a class="text-blue-500" href="https://github.com/arussellsaw/budgie/issues/new">raise an issue on GitHub.</a>
         </p>
         <p class="text-l font-bold">Follow me on <a class="text-blue-500" href="https://twitter.com/arussellsaw">Twitter. 🦆</a> Read the <a class="text-blue-500" href="/static/privacy-policy.html">Privacy Policy.</a></p>
     {{else}}
@@ -141,7 +141,27 @@
         {{if and .HasTruelayer .HasSheets .HasStripe}}
             <p class="text-xl font-bold">We're currently syncing these accounts:</p>
             {{ range .Accounts }}
-                <p class="ml-5 text-xl font-bold">•  {{.Provider.DisplayName}}<span class="text-base font-normal"> consent expires at {{.Expiry}} <a class="text-blue-500 text-m" href="/api/truelayer/oauth/login?token_id={{.TokenID}}"> reconnect.</a></span></p>
+                <p class="ml-5 text-xl font-bold">
+                    •  {{if .Error}}
+                       Connection error:
+                       <span class="text-base font-normal">
+                           '<span class="text-red-500">{{.Error}}</span>'
+                           <a class="text-blue-500 text-m" href="/api/truelayer/oauth/login?token_id={{.TokenID}}"> reconnect. </a>
+                           or
+                           <a class="text-red-500" href="/delete-token?token_id={{.TokenID}}&message=Are+you+sure+you+want+to+delete+{{.Provider.DisplayName}}?">
+                               delete connection.
+                           </a>
+                       </span>
+                {{else}}
+                        {{.Provider.DisplayName}}
+                        <span class="text-base font-normal"> consent expires at {{.Expiry}}
+                            <a class="text-blue-500 text-m" href="/api/truelayer/oauth/login?token_id={{.TokenID}}"> reconnect. </a>
+                            or
+                            <a class="text-red-500" href="/delete-token?token_id={{.TokenID}}&message=Are+you+sure+you+want+to+delete+{{.Provider.DisplayName}}?">
+                                delete it.
+                            </a>
+                        </span></p>
+                    {{end}}
             {{end}}
             {{if .User.SyncTime }}
                 <p class="font-bold">They were last synced at {{ .User.SyncTime }}</p>

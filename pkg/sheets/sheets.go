@@ -9,7 +9,7 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
 
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/token"
+	"github.com/arussellsaw/budgie/pkg/token"
 )
 
 type Client struct {

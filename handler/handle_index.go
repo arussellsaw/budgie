@@ -9,11 +9,11 @@ import (
 
 	"github.com/monzo/slog"
 
-	"github.com/arussellsaw/youneedaspreadsheet/domain"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/authn"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/sheets"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/stripe"
-	"github.com/arussellsaw/youneedaspreadsheet/pkg/truelayer"
+	"github.com/arussellsaw/budgie/domain"
+	"github.com/arussellsaw/budgie/pkg/authn"
+	"github.com/arussellsaw/budgie/pkg/sheets"
+	"github.com/arussellsaw/budgie/pkg/stripe"
+	"github.com/arussellsaw/budgie/pkg/truelayer"
 )
 
 type indexData struct {
@@ -82,23 +82,47 @@ func hasTruelayer(ctx context.Context, user *domain.User) (bool, []account) {
 	if err != nil {
 		slog.Error(ctx, "error getting truelayer client: %s", err)
 	}
-	var out []account
-	for _, tl := range tls {
-		m, err := tl.Metadata(ctx)
-		if err != nil {
-			slog.Error(ctx, "error getting connection metadata: %s", err)
-		} else if m != nil {
-			out = append(out, account{
-				TokenID:  tl.TokenID,
-				Metadata: *m,
-			})
+	var (
+		out  []account
+		agg  = make(chan account)
+		done = make(chan struct{})
+		wg   sync.WaitGroup
+	)
+	go func() {
+		for acc := range agg {
+			out = append(out, acc)
 		}
+		close(done)
+	}()
+	for _, tl := range tls {
+		wg.Add(1)
+		tl := *tl
+		go func(tl *truelayer.Client) {
+			m, err := tl.Metadata(ctx)
+			if err != nil {
+				slog.Error(ctx, "error getting connection metadata: %s", err)
+				agg <- account{
+					TokenID: tl.TokenID,
+					Error:   err.Error(),
+				}
+			} else if m != nil {
+				agg <- account{
+					TokenID:  tl.TokenID,
+					Metadata: *m,
+				}
+			}
+			wg.Done()
+		}(&tl)
 	}
+	wg.Wait()
+	close(agg)
+	<-done
 	return len(out) != 0, out
 }
 
 type account struct {
 	TokenID string
+	Error   string
 	truelayer.Metadata
 }
 
