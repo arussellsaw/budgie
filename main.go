@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"net"
 	"net/http"
@@ -23,6 +24,10 @@ import (
 	"github.com/arussellsaw/budgie/pkg/store"
 	"github.com/arussellsaw/budgie/pkg/truelayer"
 	"github.com/arussellsaw/budgie/pkg/util"
+)
+
+var (
+	build embed.FS
 )
 
 func main() {
@@ -73,7 +78,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	handler.Routes(r)
+	handler.Routes(ctx, r, build)
 
 	srv := http.Server{
 		Addr:    ":8080",

@@ -15,7 +15,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func Routes(r *mux.Router) {
+func Routes(ctx context.Context, r *mux.Router, build embed.FS) {
 	r.HandleFunc("/api/logout", handleLogout)
 	r.HandleFunc("/api/create-sheet", handleCreateSheet)
 	r.HandleFunc("/api/sync", handleSync)
@@ -31,6 +31,7 @@ func Routes(r *mux.Router) {
 	r.Handle("/dashboard", util.ErrHandler(handleDashboard))
 
 	r.Handle("/api/pulse", util.ErrHandler(handlePulse))
+	r.PathPrefix("/app/").Handler(frontend(ctx, build))
 
 	fs := http.FileServer(http.Dir("./static/"))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
